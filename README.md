@@ -1,0 +1,1 @@
+migrate-github-maven-packages
