@@ -24,7 +24,7 @@ jobs:
       - name: Get Maven packages
         run: |
             gh auth login --with-token <<< "${{ secrets.FROM_ORG_PAT }}"
-            gh package list octodemo --visibility all --package-type maven > maven-packages.json
+            gh api "orgs/octodemo/packages?package_type=maven" > maven-packages.json
       
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
