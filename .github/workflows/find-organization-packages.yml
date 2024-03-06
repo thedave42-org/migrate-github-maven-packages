@@ -1,0 +1,34 @@
+# This workflow will create a list of all Maven packages for the specified Organization
+# 1. The workflow will trigger either by a workflow_dispacth even or by the creation of an issue with the label "get-maven-packages"
+# 2. It will use the GitHub CLI to access the GitHub API and get a list of all Maven packages
+# 3. It will use the repository secret FROM_ORG_PAT to access the GitHub API
+
+name: Get Maven Packages
+
+on:
+    workflow_dispatch:
+
+
+jobs:
+  get-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up GitHub CLI
+        run: |
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+            sudo apt-add-repository https://cli.github.com/packages
+            sudo apt update
+            sudo apt install gh
+
+      - name: Get Maven packages
+        run: |
+            gh auth login --with-token <<< "${{ secrets.FROM_ORG_PAT }}"
+            gh package list octodemo --visibility all --package-type maven > maven-packages.json
+      
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          wait-timeout-minutes: 1
