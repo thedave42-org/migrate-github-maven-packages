@@ -16,6 +16,7 @@ const parser = new xml2js.Parser();
 const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
 const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
+const rootDirectory = process.env.GITHUB_WORKSPACE;
 
 // Get the credentials
 const options = {
@@ -79,7 +80,8 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
     const packages = response.data;
 
     // Loop through each package in the array
-    packages.forEach(async (pkg) => {
+    for (let i = 0; i < packages.length; i++) {
+        const pkg = packages[i];
         // Construct the URL to retrieve the maven-metadata.xml file
         const fullName = pkg.repository.full_name;
         const name = pkg.name.split('.').join('/');
@@ -130,12 +132,11 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
         };
 
         // Create a JSON file named pkg.name.json with the files
-        const rootDirectory = process.env.GITHUB_WORKSPACE;
         const fileName = `${rootDirectory}/${pkg.name}.json`;
         fs.writeFileSync(fileName, JSON.stringify(pkgFileData, null, 2));
         createdFiles.push(fileName);
         console.log(`Package: ${pkg.name} is complete processing.`);
-    });
+    };
     
     // Set the list of created JSON files as the Action output
     core.setOutput('packages', JSON.stringify(createdFiles));
