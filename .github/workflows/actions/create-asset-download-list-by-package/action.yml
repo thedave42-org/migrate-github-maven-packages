@@ -1,0 +1,15 @@
+name: 'Create Asset Download Lists by Package'
+description: 'Identify's all Maven packages and their assets in a GitHub organization'
+inputs:
+    from-org:
+        description: 'GitHub organization to scan for packages'
+        required: true
+    from-org-pat:
+        description: 'GitHub organization token with read:packages scope'
+        required: true
+outputs:
+    packages:
+        description: 'A list of the JSON files containing asset download lists'
+runs:
+    using: 'node20'
+    main: 'create-asset-download-lists-by-package.js'

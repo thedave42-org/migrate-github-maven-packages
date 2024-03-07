@@ -4,24 +4,30 @@ import xml2js from 'xml2js';
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 import { Octokit } from "@octokit/core";
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+
+// Create a variable to store the list of created JSON files
+const createdFiles = [];
 
 // Create xml2js parser
 const parser = new xml2js.Parser();
 
 // Set the organization
-const org = process.env.FROM_ORG;
+const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : getInput('from-org');
+const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : getInput('from-org-pat');
 
 // Get the credentials
 const options = {
     headers: {
-        Authorization: `Bearer ${process.env.FROM_ORG_PAT}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/xml' // or 'text/xml'
     }
 };
 
 // Initialize Octokit
 const octokit = new Octokit({
-    auth: process.env.FROM_ORG_PAT,
+    auth: token,
 });
 
 // Create method to recursively get all the versions of a package
@@ -68,12 +74,13 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
 }
 
 (async () => {
+    // Get a list of all Maven packages from a GitHub organization
     const response = await octokit.request(`GET /orgs/${org}/packages?package_type=maven`);
     const packages = response.data;
 
-    // Loop through each object in the array
+    // Loop through each package in the array
     packages.forEach(async (pkg) => {
-        // Construct the URL
+        // Construct the URL to retrieve the maven-metadata.xml file
         const baseUrl = process.env.GITHUB_MAVEN_URL;
         const fullName = pkg.repository.full_name;
         const name = pkg.name.split('.').join('/');
@@ -92,15 +99,16 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             versions: []
         };
 
+        // Get a list of the versions from the maven-metadata.xml file
         const metadataXml = await parser.parseStringPromise(versionList.data);
         const versions = metadataXml.metadata.versioning[0].versions[0].version;
         let files = [];
 
+        // Loop through each version in the array and find its file assets
         for (let i = 0; i < versions.length; i++) {
             const version = versions[i];
-            console.log(pkg.name, version);
 
-            // Fetch all files
+            // Get all the file assets for the version
             files = await fetchFiles(pkg, version, files);
             const versionData = {
                 version: version,
@@ -115,13 +123,22 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
                 versionData.snapshotMetadataUrl = packageVersionUrl;
                 versionData.snapshotMetadataXml = versionList.data;
             }
+
+            // Add the version asset data to the package data
             pkgFileData.versions.push(versionData);
 
             console.log(`Package: ${pkg.name} Version: ${version} has been processed.`);        
         };
 
         // Create a JSON file named pkg.name.json with the files
-        fs.writeFileSync(`../${pkg.name}.json`, JSON.stringify(pkgFileData, null, 2));
+        const rootDirectory = process.env.GITHUB_WORKSPACE;
+        const fileName = `${rootDirectory}/${pkg.name}.json`;
+        fs.writeFileSync(fileName, JSON.stringify(pkgFileData, null, 2));
+        createdFiles.push(fileName);
         console.log(`Package: ${pkg.name} is complete processing.`);
     });
+    
+    // Set the list of created JSON files as the Action output
+    core.setOutput('packages', createdFiles);
+
 })();

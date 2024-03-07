@@ -8,7 +8,6 @@ name: Get Maven Packages
 on:
     workflow_dispatch:
 
-
 jobs:
   get-packages:
     runs-on: ubuntu-latest
@@ -16,17 +15,22 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Set up GitHub CLI
-        run: |
-            sudo apt update
-            sudo apt install gh
+      - name: Get Maven Packages
+        uses: ./.github/actions/create-asset-download-list-by-package
+        id: org-packages
+        with:
+          from-org: 'octodemo'
+          from-org-pat: ${{ secrets.FROM_ORG_PAT }}
 
-      - name: Get Maven packages
+      - name: Add list to job summary
         run: |
-            gh auth login --with-token <<< "${{ secrets.FROM_ORG_PAT }}"
-            gh api "orgs/octodemo/packages?package_type=maven" > maven-packages.json
+          echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
+          echo "-------------" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+
       
       - name: Setup upterm session
+        if: always()
         uses: lhotari/action-upterm@v1
         with:
           wait-timeout-minutes: 1
