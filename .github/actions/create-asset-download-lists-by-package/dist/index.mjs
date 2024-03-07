@@ -45825,8 +45825,8 @@ const createdFiles = [];
 const parser = new xml2js.Parser();
 
 // Set the organization
-const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : getInput('from-org');
-const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : getInput('from-org-pat');
+const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
+const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
 
 // Get the credentials
 const options = {
