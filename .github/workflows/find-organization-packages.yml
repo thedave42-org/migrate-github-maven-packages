@@ -28,8 +28,8 @@ jobs:
           echo "-------------" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
 
-      - name: Setup upterm session
-        if: always()
-        uses: lhotari/action-upterm@v1
-        with:
-          wait-timeout-minutes: 1
+      # - name: Setup upterm session
+      #   if: always()
+      #   uses: lhotari/action-upterm@v1
+      #   with:
+      #     wait-timeout-minutes: 1
