@@ -1,5 +1,5 @@
 name: 'Create Asset Download Lists by Package'
-description: 'Identify's all Maven packages and their assets in a GitHub organization'
+description: "1dentify's all Maven packages and their assets in a GitHub organization"
 inputs:
     from-org:
         description: 'GitHub organization to scan for packages'
