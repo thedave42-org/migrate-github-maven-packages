@@ -5,7 +5,6 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 import { Octokit } from "@octokit/core";
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 
 // Create a variable to store the list of created JSON files
 const createdFiles = [];
@@ -16,6 +15,7 @@ const parser = new xml2js.Parser();
 // Set the organization
 const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
 const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
+const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
 
 // Get the credentials
 const options = {
@@ -81,10 +81,9 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
     // Loop through each package in the array
     packages.forEach(async (pkg) => {
         // Construct the URL to retrieve the maven-metadata.xml file
-        const baseUrl = process.env.GITHUB_MAVEN_URL;
         const fullName = pkg.repository.full_name;
         const name = pkg.name.split('.').join('/');
-        const packageUrl = `${baseUrl}${fullName}/${name}/maven-metadata.xml`;
+        const packageUrl = `${baseUrl}/${fullName}/${name}/maven-metadata.xml`;
 
         // Download the maven-metadata.xml file with the version list
         const versionList = await axios.get(packageUrl, options);
@@ -118,7 +117,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             // if the version contain the word SNAPSHOT, download the maven-metadata.xml file with file list
             let versionList = null;
             if (version.includes('SNAPSHOT')) {
-                const packageVersionUrl = `${baseUrl}${fullName}/${name}/${version}/maven-metadata.xml`;
+                const packageVersionUrl = `${baseUrl}/${fullName}/${name}/${version}/maven-metadata.xml`;
                 versionList = await axios.get(packageVersionUrl, options);
                 versionData.snapshotMetadataUrl = packageVersionUrl;
                 versionData.snapshotMetadataXml = versionList.data;

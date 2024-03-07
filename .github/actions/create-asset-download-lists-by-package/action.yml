@@ -7,6 +7,11 @@ inputs:
     from-org-pat:
         description: 'GitHub organization token with read:packages scope'
         required: true
+    github-maven-url:
+        description: 'The base url of the GitHub Packages Maven repo'
+        default: 'https://maven.pkg.github.com'
+        required: false
+
 outputs:
     packages:
         description: 'A list of the JSON files containing asset download lists'
