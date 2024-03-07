@@ -12,4 +12,4 @@ outputs:
         description: 'A list of the JSON files containing asset download lists'
 runs:
     using: 'node20'
-    main: 'dist/index.js'
+    main: 'dist/index.mjs'

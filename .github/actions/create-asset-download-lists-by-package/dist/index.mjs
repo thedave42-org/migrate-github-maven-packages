@@ -45808,7 +45808,7 @@ class Octokit {
 var core = __nccwpck_require__(6588);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(2835);
-;// CONCATENATED MODULE: ./create-asset-download-lists-by-package.js
+;// CONCATENATED MODULE: ./create-asset-download-lists-by-package.mjs
 
 
 
