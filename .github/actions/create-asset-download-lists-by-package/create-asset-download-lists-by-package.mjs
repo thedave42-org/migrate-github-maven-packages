@@ -138,6 +138,5 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
     });
     
     // Set the list of created JSON files as the Action output
-    core.setOutput('packages', createdFiles);
-
+    core.setOutput('packages', JSON.stringify(createdFiles));
 })();
