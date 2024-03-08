@@ -7,6 +7,11 @@ name: Get Maven Packages
 
 on:
     workflow_dispatch:
+      inputs:
+        org:
+          description: 'The organization to get the Maven packages from'
+          required: true
+          default: 'octodemo'
 
 jobs:
   get-packages:
@@ -23,7 +28,7 @@ jobs:
         uses: ./.github/actions/create-asset-download-lists-by-package
         id: org-packages
         with:
-          from-org: 'octodemo'
+          from-org: ${{ github.event.inputs.org }}
           from-org-pat: ${{ secrets.FROM_ORG_PAT }}
 
       - name: Add JSON files to cache
