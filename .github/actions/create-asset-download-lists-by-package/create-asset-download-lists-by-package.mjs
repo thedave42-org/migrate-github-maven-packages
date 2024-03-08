@@ -5,6 +5,7 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 import { Octokit } from "@octokit/core";
 import * as core from '@actions/core';
+import JSONStream from 'JSONStream';
 
 // Create a variable to store the list of created JSON files
 const createdFiles = [];
@@ -97,7 +98,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             repository: pkg.repository.name,
             owner: pkg.owner.login,
             repositoryFullName: pkg.repository.full_name,
-            metadataURl: packageUrl,
+            metadataUrl: packageUrl,
             metadataXml: versionList.data,
             versions: []
         };
@@ -135,7 +136,18 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
 
         // Create a JSON file named pkg.name.json with the files
         const fileName = `${rootDirectory}/${pkg.name}.json`;
-        fs.writeFileSync(fileName, JSON.stringify(pkgFileData, null, 2));
+        const transformStream = JSONStream.stringifyObject();
+        const outputStream = fs.createWriteStream(fileName);
+        transformStream.pipe(outputStream);
+
+        // Write each property in pkgFileData to the stream
+        for (let key in pkgFileData) {
+            transformStream.write([key, pkgFileData[key]]);
+        }
+
+        // End the stream
+        transformStream.end();
+
         createdFiles.push(fileName);
         console.log(`Package ${pkg.name} is complete processing.`);
     };
