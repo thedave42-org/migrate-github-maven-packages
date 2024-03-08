@@ -90,6 +90,8 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
         // Download the maven-metadata.xml file with the version list
         const versionList = await axios.get(packageUrl, options);
 
+        console.log(`Starting processing of package ${pkg.name}.`);
+
         const pkgFileData = {
             name: pkg.name,
             repository: pkg.repository.name,
@@ -135,7 +137,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
         const fileName = `${rootDirectory}/${pkg.name}.json`;
         fs.writeFileSync(fileName, JSON.stringify(pkgFileData, null, 2));
         createdFiles.push(fileName);
-        console.log(`Package: ${pkg.name} is complete processing.`);
+        console.log(`Package ${pkg.name} is complete processing.`);
     };
     
     // Set the list of created JSON files as the Action output
