@@ -128,7 +128,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             // Add the version asset data to the package data
             pkgFileData.versions.push(versionData);
 
-            console.log(`\tVersion ${version} of package ${pkg.name} has been processed.`);
+            console.log(`\tVersion ${version} of package ${pkg.name} has been processed.`);        
         };
 
         // Create a JSON file named pkg.name.json with the files
