@@ -18,7 +18,7 @@ const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
 const rootDirectory = process.env.GITHUB_WORKSPACE;
 
-// Get the credentials
+// Set the options for the axios request
 const options = {
     headers: {
         Authorization: `Bearer ${token}`,
