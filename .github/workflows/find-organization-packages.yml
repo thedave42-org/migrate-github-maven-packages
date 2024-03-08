@@ -11,6 +11,10 @@ on:
 jobs:
   get-packages:
     runs-on: ubuntu-latest
+
+    outputs:
+      packages: ${{ steps.org-packages.outputs.packages }}
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -25,12 +29,39 @@ jobs:
       - name: Add JSON files to cache
         uses: actions/cache@v4.0.1
         with:
+          key: |
+            ${{ github.workflow }}-${{ github.run_attempt }}-json
           path: |
             *.json
-          key: ${{ runner.os }}-json-files
-
+          
       - name: Add list to job summary
         run: |
           echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
           echo "-------------" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+  
+  upload-assets:
+    needs: get-packages
+    runs-on: ubuntu-latest
+
+    strategy:
+        matrix:
+          pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # retrieve cache
+      - name: Restore JSON files from cache
+        uses: actions/cache@v4.0.1
+        with:
+          key: |
+            ${{ github.workflow }}-${{ github.run_attempt }}-json
+          path: |
+            *.json 
+            
+      - name: Read from file ${{ matrix.pkg }}
+        run: |
+          echo "Reading from file ${{ matrix.pkg }}"
+          cat ${{ matrix.pkg }}
