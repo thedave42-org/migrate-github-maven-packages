@@ -99,7 +99,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             owner: pkg.owner.login,
             repositoryFullName: pkg.repository.full_name,
             metadataUrl: packageUrl,
-            metadataXml: versionList.data,
+            //metadataXml: versionList.data,
             versions: []
         };
 
@@ -125,7 +125,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
                 const packageVersionUrl = `${baseUrl}/${fullName}/${name}/${version}/maven-metadata.xml`;
                 versionList = await axios.get(packageVersionUrl, options);
                 versionData.snapshotMetadataUrl = packageVersionUrl;
-                versionData.snapshotMetadataXml = versionList.data;
+                //versionData.snapshotMetadataXml = versionList.data;
             }
 
             // Add the version asset data to the package data
