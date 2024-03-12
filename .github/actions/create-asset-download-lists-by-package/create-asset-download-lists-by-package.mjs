@@ -5,7 +5,7 @@ import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
 import { Octokit } from "@octokit/core";
 import * as core from '@actions/core';
-import JSONStream from 'JSONStream';
+import bjson from 'big-json';
 
 // Create a variable to store the list of created JSON files
 const createdFiles = [];
@@ -33,7 +33,7 @@ const octokit = new Octokit({
 });
 
 // Create method to recursively get all the versions of a package
-const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
+const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
     const query = `
         query { 
             repository(owner:"${pkg.owner.login}", name:"${pkg.repository.name}") { 
@@ -41,7 +41,49 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
                     nodes {
                         name
                         version(version: "${version}") {
-                            files(first: 100, after: ${JSON.stringify(cursor)}) {
+                            files(first: 10, after: ${JSON.stringify(cursor)}) {
+                                nodes {
+                                    name
+                                }    
+                                pageInfo {
+                                    endCursor
+                                    hasNextPage
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    `;
+
+    // Make the GraphQL request
+    const response = await octokit.graphql(query);
+
+    // Log the files
+    response.repository.packages.nodes[0].version.files.nodes.forEach(file => {
+        files.push(file);
+    });
+
+    // If there are more pages, fetch the next page
+    const pageInfo = response.repository.packages.nodes[0].version.files.pageInfo;
+    if (pageInfo.hasNextPage) {
+        files = await fetchFileNames(pkg, version, files, pageInfo.endCursor);
+    }
+
+    return files;
+}
+
+// Create method to recursively get all the versions of a package
+const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) => {
+    const query = `
+        query { 
+            repository(owner:"${pkg.owner.login}", name:"${pkg.repository.name}") { 
+                packages(names: ["${pkg.name}"], first: 1) {
+                    nodes {
+                        name
+                        version(version: "${version}") {
+                            files(first: 10, after: ${JSON.stringify(cursor)}) {
                                 nodes {
                                     name
                                     url
@@ -69,11 +111,12 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
     // If there are more pages, fetch the next page
     const pageInfo = response.repository.packages.nodes[0].version.files.pageInfo;
     if (pageInfo.hasNextPage) {
-        files = await fetchFiles(pkg, version, files, pageInfo.endCursor);
+        files = await fetchFileAssetUrls(pkg, version, files, pageInfo.endCursor);
     }
 
     return files;
 }
+
 
 (async () => {
     // Get a list of all Maven packages from a GitHub organization
@@ -99,7 +142,6 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             owner: pkg.owner.login,
             repositoryFullName: pkg.repository.full_name,
             metadataUrl: packageUrl,
-            //metadataXml: versionList.data,
             versions: []
         };
 
@@ -113,7 +155,7 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
             const version = versions[i];
 
             // Get all the file assets for the version
-            files = await fetchFiles(pkg, version, files);
+            files = await fetchFileNames(pkg, version, files);
             const versionData = {
                 version: version,
                 files: files
@@ -125,7 +167,6 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
                 const packageVersionUrl = `${baseUrl}/${fullName}/${name}/${version}/maven-metadata.xml`;
                 versionList = await axios.get(packageVersionUrl, options);
                 versionData.snapshotMetadataUrl = packageVersionUrl;
-                //versionData.snapshotMetadataXml = versionList.data;
             }
 
             // Add the version asset data to the package data
@@ -136,17 +177,26 @@ const fetchFiles = async (pkg, version, files = null, cursor = null,) => {
 
         // Create a JSON file named pkg.name.json with the files
         const fileName = `${rootDirectory}/${pkg.name}.json`;
-        const transformStream = JSONStream.stringifyObject();
         const outputStream = fs.createWriteStream(fileName);
-        transformStream.pipe(outputStream);
 
-        // Write each property in pkgFileData to the stream
-        for (let key in pkgFileData) {
-            transformStream.write([key, pkgFileData[key]]);
+        const stringifyStream = bjson.createStringifyStream({
+            body: pkgFileData
+        });
+    
+        const writeData = (d) => {
+            let result = outputStream.write(d);
+            if (!result) {
+                outputStream.once('drain', writeData);
+            }
         }
-
-        // End the stream
-        transformStream.end();
+    
+        stringifyStream.on('data', (chunk) => {
+            writeData(chunk);
+        });
+    
+        stringifyStream.on('end',  () => {
+            outputStream.end();
+        });
 
         createdFiles.push(fileName);
         console.log(`Package ${pkg.name} is complete processing.`);
