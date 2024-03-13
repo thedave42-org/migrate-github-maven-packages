@@ -185,7 +185,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             let versionList = null;
             if (version.includes('SNAPSHOT')) {
                 const packageVersionUrl = `${baseUrl}/${fullName}/${name}/${version}/maven-metadata.xml`;
-                versionList = await axios.get(packageVersionUrl, options);
+                //versionList = await axios.get(packageVersionUrl, options);
                 versionData.snapshotMetadataUrl = packageVersionUrl;
             }
 
