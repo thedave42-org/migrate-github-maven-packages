@@ -11,6 +11,14 @@ inputs:
         description: 'The base url of the GitHub Packages Maven repo'
         default: 'https://maven.pkg.github.com'
         required: false
+    graphql-query-size:
+        description: 'The number of records per page request - reduce if getting timeouts'
+        default: '50'
+        required: false
+    graphql-query-delay:
+        description: 'A delay between GraphQL API requests for rate limiting'
+        default: '0'
+        required: false
 
 outputs:
     packages:

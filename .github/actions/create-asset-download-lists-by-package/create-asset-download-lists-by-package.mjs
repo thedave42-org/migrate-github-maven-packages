@@ -17,7 +17,12 @@ const parser = new xml2js.Parser();
 const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
 const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
+const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined) ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
+const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined) ? process.env.GRAPHQL_QUERY_DELAY : core.getInput('graphql-query-delay');
 const rootDirectory = process.env.GITHUB_WORKSPACE;
+
+// Variable to hold page number for recusion
+let pageNumber = 0;
 
 // Set the options for the axios request
 const options = {
@@ -32,6 +37,14 @@ const octokit = new Octokit({
     auth: token,
 });
 
+// Create a method that waits for a specified number of milliseconds
+const wait = (ms) => {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+};
+
+
 // Create method to recursively get all the versions of a package
 const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
     const query = `
@@ -41,7 +54,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
                     nodes {
                         name
                         version(version: "${version}") {
-                            files(first: 10, after: ${JSON.stringify(cursor)}) {
+                            files(first: ${graphQlQuerySize}, after: ${JSON.stringify(cursor)}) {
                                 nodes {
                                     name
                                 }    
@@ -68,6 +81,8 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
     // If there are more pages, fetch the next page
     const pageInfo = response.repository.packages.nodes[0].version.files.pageInfo;
     if (pageInfo.hasNextPage) {
+        console.log(`\t\t\tFetching page ${++pageNumber} of files for version ${version} of package ${pkg.name}.`);
+        await wait(graphQLQueryDelay);
         files = await fetchFileNames(pkg, version, files, pageInfo.endCursor);
     }
 
@@ -83,7 +98,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
                     nodes {
                         name
                         version(version: "${version}") {
-                            files(first: 10, after: ${JSON.stringify(cursor)}) {
+                            files(first: ${graphQlQuerySize}, after: ${JSON.stringify(cursor)}) {
                                 nodes {
                                     name
                                     url
@@ -111,6 +126,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
     // If there are more pages, fetch the next page
     const pageInfo = response.repository.packages.nodes[0].version.files.pageInfo;
     if (pageInfo.hasNextPage) {
+        await wait(graphQLQueryDelay);
         files = await fetchFileAssetUrls(pkg, version, files, pageInfo.endCursor);
     }
 
@@ -150,11 +166,15 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
         const versions = metadataXml.metadata.versioning[0].versions[0].version;
         let files = [];
 
+        console.log(`\tPackage ${pkg.name} has ${versions.length} versions.`);
+
         // Loop through each version in the array and find its file assets
         for (let i = 0; i < versions.length; i++) {
             const version = versions[i];
 
             // Get all the file assets for the version
+            pageNumber = 1;
+            files = [];
             files = await fetchFileNames(pkg, version, files);
             const versionData = {
                 version: version,
@@ -172,7 +192,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             // Add the version asset data to the package data
             pkgFileData.versions.push(versionData);
 
-            console.log(`\tVersion ${version} of package ${pkg.name} has been processed.`);        
+            console.log(`\tVersion ${version} of package ${pkg.name} has been processed. Found ${versionData.files.length} files.`);        
         };
 
         // Create a JSON file named pkg.name.json with the files
