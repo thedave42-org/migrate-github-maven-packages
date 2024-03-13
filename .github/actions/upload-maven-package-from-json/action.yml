@@ -1,11 +1,14 @@
-name: 'Create Asset Download Lists by Package'
-description: "1dentify's all Maven packages and their assets in a GitHub organization"
+name: 'Upload package from JSON file'
+description: "Migration the package defined in the JSON between Organizations"
 inputs:
-    from-org:
-        description: 'GitHub Organization where the package is stored'
-        required: true
     from-org-pat:
         description: 'Token with read:packages scope for the Organization where the package is stored'
+        required: true
+    to-org:
+        description: 'Name of GitHub Organization where the package should be copied'
+        required: true
+    to-org-pat:
+        description: 'Token with read:packages scope for the Organization where the package should be copied'
         required: true
     github-maven-url:
         description: 'The base url of the GitHub Packages Maven repo'

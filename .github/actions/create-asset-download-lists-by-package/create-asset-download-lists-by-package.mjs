@@ -6,6 +6,12 @@ dotenvConfig();
 import { Octokit } from "@octokit/core";
 import * as core from '@actions/core';
 import bjson from 'big-json';
+import consoleStamp from 'console-stamp';
+
+// Add a timestamp to the console logs
+consoleStamp(console, { 
+    format: ':date(yyyy/mm/dd HH:MM:ss.l)' 
+});
 
 // Create a variable to store the list of created JSON files
 const createdFiles = [];
@@ -150,8 +156,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
         // Download the maven-metadata.xml file with the version list
         const versionList = await axios.get(packageUrl, options);
 
-        console.log(`Starting processing of package ${pkg.name}.`);
-
+        // Create a JSON object to store the package data
         const pkgFileData = {
             name: pkg.name,
             repository: pkg.repository.name,
@@ -166,11 +171,13 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
         const versions = metadataXml.metadata.versioning[0].versions[0].version;
         let files = [];
 
-        console.log(`\tPackage ${pkg.name} has ${versions.length} versions.`);
+        console.log(`Starting processing of package ${pkg.name}. Found ${versions.length} versions.`);
 
         // Loop through each version in the array and find its file assets
         for (let i = 0; i < versions.length; i++) {
             const version = versions[i];
+
+            console.log(`\tStarting version ${version} of package ${pkg.name}...`); 
 
             // Get all the file assets for the version
             pageNumber = 1;
