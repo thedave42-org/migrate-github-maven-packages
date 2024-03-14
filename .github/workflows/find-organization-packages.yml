@@ -34,7 +34,7 @@ jobs:
         with:
           from-org: ${{ github.event.inputs.from-org }}
           from-org-pat: ${{ secrets.FROM_ORG_PAT }}
-          to-org: ${{ github.events.inputs.to-org}}
+          to-org: ${{ github.event.inputs.to-org}}
           to-org-pat: ${{ secrets.TO_ORG_PAT }}
 
       - name: Add JSON files to cache
