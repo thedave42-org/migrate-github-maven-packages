@@ -7,10 +7,8 @@ import xml2js from 'xml2js';
 import path from 'path';
 import { Octokit } from "@octokit/core";
 import * as core from '@actions/core';
-import bjson from 'big-json';
 import consoleStamp from 'console-stamp';
 import { argv } from 'node:process';
-import { PassThrough } from 'stream';
 
 // Create xml2js parser
 const parser = new xml2js.Parser();
