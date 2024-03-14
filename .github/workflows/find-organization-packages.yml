@@ -51,13 +51,6 @@ jobs:
           echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
           echo "-------------" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        if: ${{ always() }}
-        with:
-          wait-timeout-minutes: 1
-          limit-access-to-users: thedave42
   
   upload-assets:
     needs: get-packages
