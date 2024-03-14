@@ -8,11 +8,15 @@ name: Get Maven Packages
 on:
     workflow_dispatch:
       inputs:
-        org:
-          description: 'The organization to get the Maven packages from'
+        from-org:
+          description: 'GitHub Organization where the package is stored'
           required: true
           default: 'octodemo'
-
+        to-org:
+          description: 'Name of GitHub Organization where the package should be copied'
+          required: true
+          default: 'thedave42-org'
+  
 jobs:
   get-packages:
     runs-on: ubuntu-latest
@@ -28,8 +32,10 @@ jobs:
         uses: ./.github/actions/create-asset-download-lists-by-package
         id: org-packages
         with:
-          from-org: ${{ github.event.inputs.org }}
+          from-org: ${{ github.event.inputs.from-org }}
           from-org-pat: ${{ secrets.FROM_ORG_PAT }}
+          to-org: ${{ github.events.inputs.to-org}}
+          to-org-pat: ${{ secrets.FROM_ORG_PAT }}
 
       - name: Add JSON files to cache
         uses: actions/cache@v4.0.1
