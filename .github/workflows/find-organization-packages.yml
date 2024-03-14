@@ -44,6 +44,7 @@ jobs:
             ${{ github.workflow }}-${{ github.run_attempt }}-json
           path: |
             *.json
+          save-always: true
           
       - name: Add list to job summary
         run: |
