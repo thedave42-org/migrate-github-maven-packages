@@ -127,7 +127,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
             return false;
         });
 
-        // Create a JSON object to store the package data
+         // Create a JSON object to store the package data
         const pkgFileData = {
             name: pkg.name,
             repository: pkg.repository.name,
@@ -144,7 +144,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
         const versions = metadataXml.metadata.versioning[0].versions[0].version;
         let files = [];
 
-        console.log(`Starting processing of package ${pkg.name}. Found ${versions.length} versions.`);
+        console.log(`Starting processing of package ${pkg.name}. Found ${versions.length} versions. ${repoExists ? 'Repository exists in target organization.' : 'Repository does not exist in target organization.'}`);
 
         // Loop through each version in the array and find its file assets
         for (let i = 0; i < versions.length; i++) {
