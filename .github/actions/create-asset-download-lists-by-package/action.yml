@@ -7,6 +7,12 @@ inputs:
     from-org-pat:
         description: 'Token with read:packages scope for the Organization where the package is stored'
         required: true
+    to-org:
+        description: 'Name of GitHub Organization where the package should be copied'
+        required: true
+    to-org-pat:
+        description: 'Token with write:packages scope for the Organization where the package should be copied'
+        required: true
     github-maven-url:
         description: 'The base url of the GitHub Packages Maven repo'
         default: 'https://maven.pkg.github.com'

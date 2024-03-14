@@ -17,7 +17,6 @@ const parser = new xml2js.Parser();
 
 // Set the organization
 const fromToken = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
-const toOrg = (process.env.TO_ORG != undefined) ? process.env.TO_ORG : core.getInput('to-org');
 const toToken = (process.env.TO_ORG_PAT != undefined) ? process.env.TO_ORG_PAT : core.getInput('to-org-pat');
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
 const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined) ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
@@ -38,21 +37,6 @@ consoleStamp(console, {
 
 // Variable to hold page number for recusion
 let pageNumber = 0;
-
-// Set the options for the axios request
-const fromOptions = {
-    headers: {
-        Authorization: `Bearer ${fromToken}`,
-        Accept: 'application/xml' // or 'text/xml'
-    }
-};
-
-const toOptions = {
-    headers: {
-        Authorization: `Bearer ${toToken}`,
-        Accept: 'application/xml' // or 'text/xml'
-    }
-};
 
 // Initialize Octokit
 const fromOctokit = new Octokit({
@@ -120,7 +104,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
 
     // Check if the repository already exists in the target organization
     const repoExists = await toOctokit.request('GET /repos/{owner}/{repo}', {
-        owner: toOrg,
+        owner: packageImportJson.toOwner,
         repo: packageImportJson.repository,
     }).then(() => {
         return true;
@@ -130,13 +114,13 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
     
     // If the repository does not exist, log that and exit
     if (!repoExists) {
-        console.error(`The repository ${packageImportJson.repository} does not exist in the organization ${toOrg}.`);
-        console.error(`Please migrate the repository from the organization ${packageImportJson.owner} to the organization ${toOrg} before importing the package.`);
-        core.setOutput('error', `The repository ${packageImportJson.repository} does not exist in the organization ${toOrg}. Please migrate the repository from the organization ${packageImportJson.owner} to the organization ${toOrg} before importing the package.`);
+        console.error(`The repository ${packageImportJson.repository} does not exist in the organization ${packageImportJson.toOwner}.`);
+        console.error(`Please migrate the repository from the organization ${packageImportJson.owner} to the organization ${packageImportJson.toOwner} before importing the package.`);
+        core.setOutput('error', `The repository ${packageImportJson.repository} does not exist in the organization ${packageImportJson.toOwner}. Please migrate the repository from the organization ${packageImportJson.owner} to the organization ${packageImportJson.toOwner} before importing the package.`);
         process.exit(1);
     }
 
-    console.log(`The repository ${packageImportJson.repository} exists in the organization ${toOrg}.`);
+    console.log(`The repository ${packageImportJson.repository} exists in the organization ${packageImportJson.toOwner}.`);
     console.log(`Starting import of ${packageImportJson.versions.length} versions...`);
     let files = [];
 
@@ -165,7 +149,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             const file = files[j];
             const fileUrl = file.url;
             const fileName = file.name;
-            const uploadUrl = `${baseUrl}/${toOrg}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
+            const uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
             const filePath = `${rootDirectory}/${fileName}`;
 
             const writer = fs.createWriteStream(filePath);

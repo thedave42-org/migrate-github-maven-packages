@@ -64,9 +64,9 @@ jobs:
           key: |
             ${{ github.workflow }}-${{ github.run_attempt }}-json
           path: |
-            *.json 
+            *.json
             
-      - name: Read from file ${{ matrix.pkg }}
+      - name: Read package ${{ matrix.pkg.name }} 
         run: |
-          echo "Reading from file ${{ matrix.pkg }}"
+          echo "Reading from file ${{ matrix.pkg.file }}"
           cat ${{ matrix.pkg }}

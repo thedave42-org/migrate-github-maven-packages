@@ -49161,8 +49161,10 @@ const createdFiles = [];
 const parser = new xml2js.Parser();
 
 // Set the organization
-const org = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
-const token = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
+const fromOrg = (process.env.FROM_ORG != undefined) ? process.env.FROM_ORG : core.getInput('from-org');
+const fromToken = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
+const toOrg = (process.env.TO_ORG != undefined) ? process.env.TO_ORG : core.getInput('to-org');
+const toToken = (process.env.TO_ORG_PAT != undefined) ? process.env.TO_ORG_PAT : core.getInput('to-org-pat');
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
 const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined) ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
 const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined) ? process.env.GRAPHQL_QUERY_DELAY : core.getInput('graphql-query-delay');
@@ -49174,14 +49176,18 @@ let pageNumber = 0;
 // Set the options for the axios request
 const options = {
     headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${fromToken}`,
         Accept: 'application/xml' // or 'text/xml'
     }
 };
 
 // Initialize Octokit
-const octokit = new Octokit({
-    auth: token,
+const fromOctokit = new Octokit({
+    auth: fromToken,
+});
+
+const toOctokit = new Octokit({
+    auth: toToken,
 });
 
 // Create a method that waits for a specified number of milliseconds
@@ -49218,7 +49224,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
     `;
 
     // Make the GraphQL request
-    const response = await octokit.graphql(query);
+    const response = await fromOctokit.graphql(query);
 
     // Log the files
     response.repository.packages.nodes[0].version.files.nodes.forEach(file => {
@@ -49236,54 +49242,9 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
     return files;
 }
 
-// Create method to recursively get all the versions of a package
-const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) => {
-    const query = `
-        query { 
-            repository(owner:"${pkg.owner.login}", name:"${pkg.repository.name}") { 
-                packages(names: ["${pkg.name}"], first: 1) {
-                    nodes {
-                        name
-                        version(version: "${version}") {
-                            files(first: ${graphQlQuerySize}, after: ${JSON.stringify(cursor)}) {
-                                nodes {
-                                    name
-                                    url
-                                }    
-                                pageInfo {
-                                    endCursor
-                                    hasNextPage
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    `;
-
-    // Make the GraphQL request
-    const response = await octokit.graphql(query);
-
-    // Log the files
-    response.repository.packages.nodes[0].version.files.nodes.forEach(file => {
-        files.push(file);
-    });
-
-    // If there are more pages, fetch the next page
-    const pageInfo = response.repository.packages.nodes[0].version.files.pageInfo;
-    if (pageInfo.hasNextPage) {
-        await wait(graphQLQueryDelay);
-        files = await fetchFileAssetUrls(pkg, version, files, pageInfo.endCursor);
-    }
-
-    return files;
-}
-
-
 (async () => {
     // Get a list of all Maven packages from a GitHub organization
-    const response = await octokit.request(`GET /orgs/${org}/packages?package_type=maven`);
+    const response = await fromOctokit.request(`GET /orgs/${fromOrg}/packages?package_type=maven`);
     const packages = response.data;
 
     // Loop through each package in the array
@@ -49297,11 +49258,23 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
         // Download the maven-metadata.xml file with the version list
         const versionList = await lib_axios.get(packageUrl, options);
 
+        // Check if the repository already exists in the target organization
+        const repoExists = await toOctokit.request('GET /repos/{owner}/{repo}', {
+            owner: toOrg,
+            repo: pkg.repository.name,
+        }).then(() => {
+            return true;
+        }).catch(() => {
+            return false;
+        });
+
         // Create a JSON object to store the package data
         const pkgFileData = {
             name: pkg.name,
             repository: pkg.repository.name,
             owner: pkg.owner.login,
+            toOwner: toOrg,
+            toOwnerRepoExists: repoExists,
             repositoryFullName: pkg.repository.full_name,
             metadataUrl: packageUrl,
             versions: []
@@ -49366,7 +49339,11 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             outputStream.end();
         });
 
-        createdFiles.push(fileName);
+        createdFiles.push({
+            name: pkg.name, 
+            file: fileName,
+            toOwnerRepoExists: pkgFileData.toOwnerRepoExists
+        });
         console.log(`Package ${pkg.name} is complete processing.`);
     };
     
