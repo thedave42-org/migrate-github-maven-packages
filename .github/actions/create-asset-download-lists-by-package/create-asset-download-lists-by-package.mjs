@@ -118,9 +118,10 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
         const versionList = await axios.get(packageUrl, options);
 
         // Check if the repository already exists in the target organization
+        console.log(`Checking if repository ${pkg.repository.name} exists in the target organization ${toOrg}.`);
         const repoExists = await toOctokit.request('GET /repos/{owner}/{repo}', {
             owner: toOrg,
-            repo: pkg.repository.name,
+            repo: pkg.repository.name
         }).then(() => {
             return true;
         }).catch(() => {
