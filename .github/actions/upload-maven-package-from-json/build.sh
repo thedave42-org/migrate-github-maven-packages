@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ncc build create-asset-download-lists-by-package.mjs
+ncc build upload-maven-package-from-json.mjs
