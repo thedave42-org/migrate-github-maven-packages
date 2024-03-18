@@ -3,7 +3,7 @@ import fs from 'fs';
 import xml2js from 'xml2js';
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig();
-import { Octokit } from "@octokit/core";
+import { Octokit } from "octokit"
 import * as core from '@actions/core';
 import bjson from 'big-json';
 import consoleStamp from 'console-stamp';
@@ -27,6 +27,7 @@ const toToken = (process.env.TO_ORG_PAT != undefined) ? process.env.TO_ORG_PAT :
 const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
 const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined) ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
 const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined) ? process.env.GRAPHQL_QUERY_DELAY : core.getInput('graphql-query-delay');
+const restApiPageSize = (process.env.REST_API_PAGE_SIZE != undefined) ? process.env.REST_API_PAGE_SIZE : core.getInput('rest-api-page-size');
 const rootDirectory = process.env.GITHUB_WORKSPACE;
 
 // Variable to hold page number for recusion
@@ -58,7 +59,7 @@ const wait = (ms) => {
 
 
 // Create method to recursively get all the versions of a package
-const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
+const fetchFileNames = async (pkg, version, files = null, cursor = null) => {
     const query = `
         query { 
             repository(owner:"${pkg.owner.login}", name:"${pkg.repository.name}") { 
@@ -103,8 +104,10 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null,) => {
 
 (async () => {
     // Get a list of all Maven packages from a GitHub organization
-    const response = await fromOctokit.request(`GET /orgs/${fromOrg}/packages?package_type=maven`);
-    const packages = response.data;
+    const packages = await fromOctokit.paginate(`GET /orgs/${fromOrg}/packages`, {
+        per_page: restApiPageSize,
+        package_type: 'maven'
+    });
 
     // Loop through each package in the array
     for (let i = 0; i < packages.length; i++) {

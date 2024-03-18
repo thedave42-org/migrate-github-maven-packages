@@ -42692,6 +42692,8 @@ axios.default = axios;
 // this module should only have a default export
 /* harmony default export */ const lib_axios = (axios);
 
+// EXTERNAL MODULE: external "crypto"
+var external_crypto_ = __nccwpck_require__(6113);
 // EXTERNAL MODULE: external "fs"
 var external_fs_ = __nccwpck_require__(7147);
 // EXTERNAL MODULE: ./node_modules/xml2js/lib/xml2js.js
@@ -43788,6 +43790,7 @@ const external_node_process_namespaceObject = __WEBPACK_EXTERNAL_createRequire(i
 
 
 
+
 // Create xml2js parser
 const parser = new xml2js.Parser();
 
@@ -43828,6 +43831,13 @@ const wait = (ms) => {
     return new Promise(resolve => {
         setTimeout(resolve, ms);
     });
+};
+
+const hashFile = (path) => {
+    const hash = external_crypto_.createHash('sha256');
+    const data = external_fs_.readFileSync(path);
+    hash.update(data);
+    return hash.digest('hex');
 };
 
 // Create method to recursively get all the versions of a package
@@ -43918,7 +43928,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
         files = await fetchFileAssetUrls(pkg, version.version, files);
 
         // Log the files
-        console.log(`\tVersion ${version.version} has ${files.length} files.`);
+        console.log(`Version ${version.version} has ${files.length} files.`);
 
         // For loop to loop through the files
         for (let j = 0; j < files.length; j++) {
@@ -43944,18 +43954,53 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
                 writer.on('error', reject);
             });
             
-            // Upload the file
-            const fileStream = external_fs_.createReadStream(filePath);
+            try {
+                // Try to download the file
+                const downloadResponse = await lib_axios.get(uploadUrl, {
+                    responseType: 'stream',
+                    headers: {
+                        Authorization: `Bearer ${toToken}`
+                    }
+                });
             
-            const uploadResponse = await lib_axios.put(uploadUrl, fileStream, {
-                headers: {
-                    Authorization: `Bearer ${toToken}`,
-                    'Content-Type': 'application/octet-stream',
-                    'Content-Length': fileResponse.headers['content-length']
+                const downloadPath = `${filePath}_download`;
+                const writer = external_fs_.createWriteStream(downloadPath);
+                downloadResponse.data.pipe(writer);
+            
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+            
+                // Compare the hashes of the downloaded file and the local file
+                const downloadHash = hashFile(downloadPath);
+                const localHash = hashFile(filePath);
+            
+                if (downloadHash === localHash) {
+                    console.log(`\t${j+1}: ${fileName} not uploaded. File already exists and is the same.`);
+                } else {
+                    console.log(`\t${j+1}: ${fileName} not uploaded. File already exists but is different.`);
                 }
-            });
+            
+                // Delete the downloaded file
+                external_fs_.unlinkSync(downloadPath);
+            } catch (error) {
+                // If the file is not found, upload the file
+                const fileStream = external_fs_.createReadStream(filePath);
+            
+                const uploadResponse = await lib_axios.put(uploadUrl, fileStream, {
+                    headers: {
+                        Authorization: `Bearer ${toToken}`,
+                        'Content-Type': 'application/octet-stream',
+                        'Content-Length': external_fs_.statSync(filePath).size
+                    }
+                });
 
-            console.log(`\t\t${j+1} file${(j>0)?'s':''} copied. ${fileName}`)
+                console.log(`\t${j+1}: ${fileName} uploaded.`);
+            }
+
+
+            
             
             // Delete the file
             external_fs_.unlink(filePath, (err) => {
