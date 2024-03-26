@@ -58,7 +58,7 @@ jobs:
 
     strategy:
         matrix:
-          pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
+          pkg: ${{ steps.org-packages.outputs.packages }}
 
     outputs:
       pkg: ${{ matrix.pkg }}
@@ -78,16 +78,10 @@ jobs:
           fail-on-cache-miss: true
             
       - name: Read package ${{ matrix.pkg.name }} 
+        id: read-package
         run: |
           echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
           echo "Reading from file ${{ matrix.pkg.file }}"
           cat ${{ matrix.pkg.file }}
-          
-  check-matrix:
-    needs: upload-assets
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check matrix
-        run: |
-          echo "Matrix: ${{ toJson(needs.upload-assets.outputs.pkg) }}"
+
     
