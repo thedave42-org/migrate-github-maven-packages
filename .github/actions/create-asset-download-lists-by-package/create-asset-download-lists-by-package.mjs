@@ -117,7 +117,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null) => {
         const name = pkg.name.split('.').join('/');
         const packageUrl = `${baseUrl}/${fullName}/${name}/maven-metadata.xml`;
 
-        // Download the maven-metadata.xml file with the version list
+        // Download the maven-metadata.xml file with the version list 
         const versionList = await axios.get(packageUrl, options);
 
         // Check if the repository already exists in the target organization
