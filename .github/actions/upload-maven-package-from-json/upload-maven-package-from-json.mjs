@@ -218,32 +218,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
 
                 console.log(`\t${j+1}: ${fileName} uploaded.`);
 
-                // Each newly uploaded file should now have a corresponding signature file that can now be downloaded by adding either .md5, .sha1, or .sha256 to the end of the file name
-                // Check to see that each signature file exists
-                const signatureExtensions = ['.md5', '.sha1', '.sha256'];
 
-                console.log(`\t\tChecking ${packageImportJson.toOwner} for ${fileName}'s ${signatureExtensions.join(', ')} signature files...`);
-
-                for (let k = 0; k < signatureExtensions.length; k++) {
-                    const signatureExtension = signatureExtensions[k];
-                    const signatureFileName = `${fileName}${signatureExtension}`;
-                    const signatureUploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${signatureFileName}`;
-
-                    try {
-                        // Try to make a HEAD request to the file
-                        await axios.head(signatureUploadUrl, {
-                            headers: {
-                                Authorization: `Bearer ${toToken}`
-                            }
-                        });
-
-                        // If the HEAD request is successful, the file exists
-                        console.log(`\t\t${signatureFileName} exists on the server.`);
-                    } catch (error) {
-                        // If the HEAD request fails, the file does not exist
-                        console.log(`\t\tWarning: ${signatureFileName} does not exist on the server.`);
-                    }
-                }
             }
 
 
