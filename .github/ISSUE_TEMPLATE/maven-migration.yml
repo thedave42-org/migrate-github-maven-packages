@@ -1,6 +1,6 @@
 name: Maven Migration
 description: Start a GitHub Packages Maven repository migration between two Organizations
-title: "Start Maven Migration"
+title: "Maven Migration"
 labels: ["check-migration"]
 body:
 - type: markdown
