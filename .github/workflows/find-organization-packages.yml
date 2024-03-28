@@ -1,24 +1,17 @@
 # This workflow will create a list of all Maven packages for the specified Organization
-# 1. The workflow will trigger either by a workflow_dispacth even or by the creation of an issue with the label "get-maven-packages"
+# 1. The workflow will trigger by the creation of an issue with the label "start-migration"
 # 2. It will use the GitHub CLI to access the GitHub API and get a list of all Maven packages
 # 3. It will use the repository secret FROM_ORG_PAT to access the GitHub API
 
 name: Get Maven Packages
 
 on:
-    workflow_dispatch:
-      inputs:
-        from-org:
-          description: 'GitHub Organization where the package is stored'
-          required: true
-          default: 'octodemo'
-        to-org:
-          description: 'Name of GitHub Organization where the package should be copied'
-          required: true
-          default: 'thedave42-org'
+    issues:
+        types: [labeled]
   
 jobs:
   get-packages:
+    if: github.event.label.name == 'start-migration'
     runs-on: ubuntu-latest
 
     outputs:
@@ -28,13 +21,20 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      - name: Get values from Issue form
+        id: get-values
+        run: |
+          echo "::set-output name=from-org::$(echo ${{ github.event.issue.body }} | grep -oP 'from-org: \K\w+')"
+          echo "::set-output name=to-org::$(echo ${{ github.event.issue.body }} | grep -oP 'to-org: \K\w+')"
+        shell: bash
+
       - name: Get Maven Packages
         uses: ./.github/actions/create-asset-download-lists-by-package
         id: org-packages
         with:
-          from-org: ${{ github.event.inputs.from-org }}
+          from-org: ${{ steps.get-values.outputs.from-org }}
           from-org-pat: ${{ secrets.FROM_ORG_PAT }}
-          to-org: ${{ github.event.inputs.to-org}}
+          to-org: ${{ steps.get-values.outputs.to-org}}
           to-org-pat: ${{ secrets.TO_ORG_PAT }}
 
       - name: Add JSON files to cache
