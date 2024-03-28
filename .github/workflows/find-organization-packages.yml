@@ -55,19 +55,21 @@ jobs:
             *.json
           save-always: true
       
-      - name: Generate task list and update issue
+      - name: Generate markdown tasks and update issue body
         run: |
           echo "${{ github.event.issue.body }}" > task-list.md
-          echo "## Migration Task List" >> task-list.md
+          echo "### Package List" >> task-list.md
           echo "" >> task-list.md
-          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | "- [ ] " + .name' >> task-list.md
-          echo "<!--- JSON=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
+          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] *" + .name + "*" else "- [ ] " + .name end' >> task-list.md
+          echo "" >> task-list.md
+          echo "<!-- Do not remove the below comment. -->"
+          echo "<!--- packages=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add the in-progress label
+      - name: Change label to migration-checked, and remove in-progress
         run: |
           gh issue edit ${{ github.event.issue.number }} --remove-label "in-progress,check-migration" --add-label "migration-checked"
         shell: bash
