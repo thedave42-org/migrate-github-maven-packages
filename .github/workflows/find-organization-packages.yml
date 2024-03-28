@@ -13,6 +13,8 @@ jobs:
   get-packages:
     if: github.event.label.name == 'start-migration'
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
 
     outputs:
       packages: ${{ steps.org-packages.outputs.packages }}
@@ -49,38 +51,48 @@ jobs:
           path: |
             *.json
           save-always: true
-          
+      
+      - name: Generate task list and update issue
+        run: |
+          echo "## Migration Task List" >> task-list.md
+          echo "" >> task-list.md
+          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | "- [ ] " + .name' >> task-list.md
+          gh issue update ${{ github.event.issue.number }} --body "$(cat task-list.md)"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Add list to job summary
         run: |
           echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
           echo "-------------" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
   
-  upload-assets:
-    needs: get-packages
-    runs-on: ubuntu-latest
+  # upload-assets:
+  #   needs: get-packages
+  #   runs-on: ubuntu-latest
 
-    strategy:
-        matrix:
-          pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
+  #   strategy:
+  #       matrix:
+  #         pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
 
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Check out code
+  #       uses: actions/checkout@v4
 
-      # retrieve cache
-      - name: Restore JSON files from cache
-        uses: actions/cache@v4.0.1
-        with:
-          key: |
-            ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
-          path: |
-            *.json
-          fail-on-cache-miss: true
+  #     # retrieve cache
+  #     - name: Restore JSON files from cache
+  #       uses: actions/cache@v4.0.1
+  #       with:
+  #         key: |
+  #           ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
+  #         path: |
+  #           *.json
+  #         fail-on-cache-miss: true
             
-      - name: Read package ${{ matrix.pkg.name }} 
-        run: |
-          echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
-          echo "Reading from file ${{ matrix.pkg.file }}"
-          cat ${{ matrix.pkg.file }}
+  #     - name: Read package ${{ matrix.pkg.name }} 
+  #       run: |
+  #         echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
+  #         echo "Reading from file ${{ matrix.pkg.file }}"
+  #         cat ${{ matrix.pkg.file }}
           
