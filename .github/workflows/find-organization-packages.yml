@@ -59,7 +59,7 @@ jobs:
         run: |
           echo "${{ github.event.issue.body }}" | awk '/<!--- packages -->/{exit}1' > task-list.md
           if echo '${{ steps.org-packages.outputs.packages }}' | jq 'any(.[]; .toOwnerRepoExists == false)'; then
-            echo "Note: packages that are struck out do not have a corresponding repository in the destination Organization and are not ready to migrate." >> task-list.md
+            echo "> Note: packages that are struck out do not have a corresponding repository in the destination Organization and are not ready to migrate." >> task-list.md
           fi
           echo "### Package List" >> task-list.md
           echo "" >> task-list.md
