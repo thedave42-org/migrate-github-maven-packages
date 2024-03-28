@@ -23,3 +23,7 @@ body:
     placeholder: "e.g. octocat"
   validations:
     required: true
+- type: markdown
+  attributes:
+    value: |
+      <!-- packages -->

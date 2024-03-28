@@ -57,13 +57,16 @@ jobs:
       
       - name: Generate markdown tasks and update issue body
         run: |
-          echo "${{ github.event.issue.body }}" > task-list.md
+          echo "${{ github.event.issue.body }}" | awk '/<!--- packages -->/{exit}1' > task-list.md
+          if echo '${{ steps.org-packages.outputs.packages }}' | jq 'any(.[]; .toOwnerRepoExists == false)'; then
+            echo "Note: packages that are struck out do not have a corresponding repository in the destination Organization and are not ready to migrate." >> task-list.md
+          fi
           echo "### Package List" >> task-list.md
           echo "" >> task-list.md
           echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] ~" + .name + "~" else "- [ ] " + .name end' >> task-list.md
           echo "" >> task-list.md
           echo "<!-- Do not remove the below comment. -->"
-          echo "<!--- packages=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
+          echo "<!--- package-list=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
         env:
