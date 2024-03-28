@@ -57,7 +57,7 @@ jobs:
           echo "## Migration Task List" >> task-list.md
           echo "" >> task-list.md
           echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | "- [ ] " + .name' >> task-list.md
-          gh issue update ${{ github.event.issue.number }} --body "$(cat task-list.md)"
+          gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
