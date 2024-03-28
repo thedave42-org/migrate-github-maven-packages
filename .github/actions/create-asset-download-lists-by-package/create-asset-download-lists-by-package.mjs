@@ -203,6 +203,7 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null) => {
 
         createdFiles.push({
             name: pkg.name, 
+            repo: pkg.repository.name,
             file: fileName,
             toOwnerRepoExists: pkgFileData.toOwnerRepoExists
         });
