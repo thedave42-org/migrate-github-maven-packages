@@ -54,9 +54,11 @@ jobs:
       
       - name: Generate task list and update issue
         run: |
+          echo "${{ github.event.issue.body }}" > task-list.md
           echo "## Migration Task List" >> task-list.md
           echo "" >> task-list.md
           echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | "- [ ] " + .name' >> task-list.md
+          echo "<!--- JSON=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
         env:
