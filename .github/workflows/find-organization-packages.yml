@@ -24,6 +24,7 @@ jobs:
       - name: Get values from Issue form
         id: get-values
         run: |
+          echo "${{ github.event.issue.body }}" >> $GITHUB_STEP_SUMMARY
           echo "from-org=$(echo ${{ github.event.issue.body }} | grep -oP 'from-org: \K\w+')" >> $GITHUB_OUTPUT
           echo "to-org=$(echo ${{ github.event.issue.body }} | grep -oP 'to-org: \K\w+')" >> $GITHUB_OUTPUT
           echo "from-org=$(echo ${{ github.event.issue.body }} | grep -oP 'from-org: \K\w+')" >> $GITHUB_STEP_SUMMARY
