@@ -23,13 +23,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Add the in-progress label
-        run: |
-          gh issue edit ${{ github.event.issue.number }} --add-label "in-progress"
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Get values from Issue form
         id: get-values
         run: |
@@ -39,7 +32,10 @@ jobs:
           TO_ORG=$(echo "${{ github.event.issue.body }}" | awk '/### Destination Organization Name/{getline; getline; print}')
           echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
           echo "to-org=$TO_ORG" >> "$GITHUB_STEP_SUMMARY"
+          gh issue edit ${{ github.event.issue.number }} --title "Maven Migration from $FROM_ORG to $TO_ORG" --add-label "in-progress"
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Maven Packages
         uses: ./.github/actions/create-asset-download-lists-by-package
