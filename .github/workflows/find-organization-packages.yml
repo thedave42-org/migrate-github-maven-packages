@@ -26,10 +26,10 @@ jobs:
       - name: Get values from Issue form
         id: get-values
         run: |
-          FROM_ORG=$(echo "${{ github.event.issue.body }}" | awk '/### Source Organization Name/{getline; getline; print; exit}')
+          FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; getline; print; exit}')
           echo "from-org=$FROM_ORG" >> "$GITHUB_OUTPUT"
           echo "from-org=$FROM_ORG" >> "$GITHUB_STEP_SUMMARY"
-          TO_ORG=$(echo "${{ github.event.issue.body }}" | awk '/### Destination Organization Name/{getline; getline; print; exit}')
+          TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; getline; print; exit}')
           echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
           echo "to-org=$TO_ORG" >> "$GITHUB_STEP_SUMMARY"
           gh issue edit ${{ github.event.issue.number }} --title "Maven Migration from $FROM_ORG to $TO_ORG" --add-label "in-progress"
