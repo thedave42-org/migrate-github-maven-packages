@@ -60,7 +60,7 @@ jobs:
           echo "${{ github.event.issue.body }}" > task-list.md
           echo "### Package List" >> task-list.md
           echo "" >> task-list.md
-          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] *" + .name + "*" else "- [ ] " + .name end' >> task-list.md
+          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] ~" + .name + "~" else "- [ ] " + .name end' >> task-list.md
           echo "" >> task-list.md
           echo "<!-- Do not remove the below comment. -->"
           echo "<!--- packages=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
