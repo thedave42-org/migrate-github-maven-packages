@@ -1,0 +1,25 @@
+name: Start Maven Migration
+description: Start a GitHub Packages Maven repository migration between two Organizations
+title: "Start Maven Migration"
+labels: ["start-migration"]
+body:
+- type: markdown
+  attributes:
+    value: |
+      ## Define source and destination organizations
+- type: input
+  id: from-org
+  attributes:
+    label: Source Organization Name
+    description: Enter the name of the organization which currently holds your Maven packages
+    placeholder: "e.g. octocat"
+  validations:
+    required: true
+- type: input
+  id: to-org
+  attributes:
+    label: Destination Organization Name
+    description: Enter the name of the organization where you want to migrate your Maven packages
+    placeholder: "e.g. octocat"
+  validations:
+    required: true
