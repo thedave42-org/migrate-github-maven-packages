@@ -61,7 +61,7 @@ jobs:
           echo "<!-- packages -->" >> task-list.md
           echo "### Package List" >> task-list.md
           echo "" >> task-list.md
-          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] ~" + .name + "(" + .repo + ")~" else "- [ ] " + .name + "(" + .repo + ")" end' >> task-list.md
+          echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | if .toOwnerRepoExists == false then "- [ ] ~" + .name + "\t Source repo: " + .repo + "~" else "- [ ] " + .name + "\t Source repo: " + .repo end' >> task-list.md
           if echo '${{ steps.org-packages.outputs.packages }}' | jq 'any(.[]; .toOwnerRepoExists == false)'; then
             echo "> **Note**: packages that are struck out do not have a corresponding repository in the Organization \`${{ steps.get-values.outputs.to-org }}\`.  Please create/migrate the necessary repository to \`${{ steps.get-values.outputs.to-org }}\` and add the \`check-migration\` label back to this issue to re-check." >> task-list.md
           fi
