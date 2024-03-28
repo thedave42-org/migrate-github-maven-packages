@@ -11,7 +11,7 @@ on:
   
 jobs:
   get-packages:
-    if: github.event.label.name == 'start-migration'
+    if: github.event.label.name == 'check-migration'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -22,6 +22,13 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Add the in-progress label
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --add-label "in-progress"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get values from Issue form
         id: get-values
@@ -60,6 +67,13 @@ jobs:
           echo '${{ steps.org-packages.outputs.packages }}' | jq -r '.[] | "- [ ] " + .name' >> task-list.md
           echo "<!--- JSON=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add the in-progress label
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --remove-label "in-progress,check-migration" --add-label "migration-checked"
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
