@@ -82,6 +82,6 @@ jobs:
         run: |
           echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
           echo "-------------" >> $GITHUB_STEP_SUMMARY
-          echo "${{ toJSON(steps.org-packages.outputs.packages) }}" >> $GITHUB_STEP_SUMMARY
+          echo ${{ toJSON(steps.org-packages.outputs.packages) }} >> $GITHUB_STEP_SUMMARY
 
           
