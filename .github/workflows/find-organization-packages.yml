@@ -64,7 +64,7 @@ jobs:
           fi
           echo "" >> task-list.md
           echo "<!-- Do not remove the below comment. -->"
-          echo "<!-- package-list=\"${{ steps.org-packages.outputs.packages }}\" -->" >> task-list.md
+          echo "<!-- package-list=\"${{ toJSON(steps.org-packages.outputs.packages) }}\" -->" >> task-list.md
           echo "<!-- cache-key=\"${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json\" -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
@@ -82,6 +82,6 @@ jobs:
         run: |
           echo "Maven Packages" >> $GITHUB_STEP_SUMMARY
           echo "-------------" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ toJSON(steps.org-packages.outputs.packages) }}" >> $GITHUB_STEP_SUMMARY
 
           
