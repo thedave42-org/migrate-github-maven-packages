@@ -23,4 +23,8 @@ jobs:
                 echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
                 echo "package-list=$PACKAGE_LIST" >> "$GITHUB_OUTPUT"
                 echo "cache-key=$CACHE_KEY" >> "$GITHUB_OUTPUT"
+                echo "from-org=$FROM_ORG" >> "$GITHUB_STEP_SUMMARY"
+                echo "to-org=$TO_ORG" >> "$GITHUB_STEP_SUMMARY"
+                echo "package-list=$PACKAGE_LIST" >> "$GITHUB_STEP_SUMMARY"
+                echo "cache-key=$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
