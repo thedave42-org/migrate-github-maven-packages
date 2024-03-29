@@ -1,0 +1,30 @@
+# The workflow migrates Maven packages between two GitHub Organizations
+# This workflow will be trigged by a label added to an issue named 'start-migration'
+
+name: Migrate Maven Packages
+on:
+    issues:
+        types: [labeled]
+
+jobs:
+    migrate-packages:
+        if: github.event.label.name == 'start-migration'
+        runs-on: ubuntu-latest
+        steps:
+            
+          - name: Extract parameters from issue body
+            id: extract-params
+            run: |
+                FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; print; exit}')
+                TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; print; exit}')
+                PACKAGE_LIST=$(echo '${{ github.event.issue.body }}' | awk '/<!-- package-list="/{getline; print; exit}')
+                CACHE_KEY=$(echo '${{ github.event.issue.body }}' | awk '/<!-- cache-key="/{getline; print; exit}')
+                echo "from-org=$FROM_ORG" >> $GITHUB_OUTPUT
+                echo "to-org=$TO_ORG" >> $GITHUB_OUTPUT
+                echo "package-list=$PACKAGE_LIST" >> $GITHUB_OUTPUT
+                echo "cache-key=$CACHE_KEY" >> $GITHUB_OUTPUT
+                echo "from-org=$FROM_ORG" >> $GITHUB_STEP_SUMMARY
+                echo "to-org=$TO_ORG" >> $GITHUB_STEP_SUMMARY
+                echo "package-list=$PACKAGE_LIST" >> $GITHUB_STEP_SUMMARY
+                echo "cache-key=$CACHE_KEY" >> $GITHUB_STEP_SUMMARY
+            shell: bash
