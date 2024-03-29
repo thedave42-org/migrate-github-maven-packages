@@ -10,8 +10,12 @@ jobs:
     migrate-packages:
         if: github.event.label.name == 'start-migration'
         runs-on: ubuntu-latest
-        steps:
-            
+        outputs:
+          cache-key: ${{ steps.extract-params.outputs.cache-key }}
+          to-org: ${{ steps.extract-params.outputs.to-org }}
+          from-org: ${{ steps.extract-params.outputs.from-org }}
+
+        steps:        
           - name: Extract parameters from issue body
             id: extract-params
             run: |
@@ -32,3 +36,41 @@ jobs:
                 echo "$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
 
+          - name: Filter package list
+            id: filter-packages
+            run: |
+              SELECTED_TASKS=${{ steps.extract-params.outputs.selected-tasks }}
+              PACKAGE_LIST=${{ steps.extract-params.outputs.package-list }}
+              FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
+              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
+              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+            shell: bash
+  
+    # upload-assets:
+    #   needs: migrate-packages
+    #   runs-on: ubuntu-latest
+
+    #   strategy:
+    #     max-parallel: 1
+    #     matrix:
+    #       pkg: ${{fromJson(needs.migrate-packages.outputs.package-list)}}
+
+    #   steps:
+    #     - name: Check out code
+    #       uses: actions/checkout@v4
+
+    #     # retrieve cache
+    #     - name: Restore JSON files from cache
+    #       uses: actions/cache@v4.0.1
+    #       with:
+    #         key: |
+    #           ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
+    #         path: |
+    #           *.json
+    #         fail-on-cache-miss: true
+              
+    #     - name: Read package ${{ matrix.pkg.name }} 
+    #       run: |
+    #         echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
+    #         echo "Reading from file ${{ matrix.pkg.file }}"
+    #         cat ${{ matrix.pkg.file }}
