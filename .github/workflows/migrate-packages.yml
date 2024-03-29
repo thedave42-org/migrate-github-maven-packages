@@ -39,9 +39,7 @@ jobs:
           - name: Filter package list
             id: filter-packages
             run: |
-              SELECTED_TASKS=$(echo '${{ steps.extract-params.outputs.selected-tasks }}' | jq -r '.[]')
-              PACKAGE_LIST=$(echo '${{ steps.extract-params.outputs.package-list }}' | jq -c '.')
-              FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
+              FILTERED_PACKAGES=$(echo '${{ steps.extract-params.outputs.package-list }}' | jq --argjson tasks '${{ steps.extract-params.outputs.selected-tasks }}' '[.[] | select(.name as $name | $tasks | index($name))]')
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
