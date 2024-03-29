@@ -15,16 +15,12 @@ jobs:
           - name: Extract parameters from issue body
             id: extract-params
             run: |
-                FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; print; exit}')
-                TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; print; exit}')
+                FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; getline; print; exit}')
+                TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; getline; print; exit}')
                 PACKAGE_LIST=$(echo '${{ github.event.issue.body }}' | awk '/<!-- package-list="/{getline; print; exit}')
                 CACHE_KEY=$(echo '${{ github.event.issue.body }}' | awk '/<!-- cache-key="/{getline; print; exit}')
-                echo "from-org=$FROM_ORG" >> $GITHUB_OUTPUT
-                echo "to-org=$TO_ORG" >> $GITHUB_OUTPUT
-                echo "package-list=$PACKAGE_LIST" >> $GITHUB_OUTPUT
-                echo "cache-key=$CACHE_KEY" >> $GITHUB_OUTPUT
-                echo "from-org=$FROM_ORG" >> $GITHUB_STEP_SUMMARY
-                echo "to-org=$TO_ORG" >> $GITHUB_STEP_SUMMARY
-                echo "package-list=$PACKAGE_LIST" >> $GITHUB_STEP_SUMMARY
-                echo "cache-key=$CACHE_KEY" >> $GITHUB_STEP_SUMMARY
+                echo "from-org=$FROM_ORG" >> "$GITHUB_OUTPUT"
+                echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
+                echo "package-list=$PACKAGE_LIST" >> "$GITHUB_OUTPUT"
+                echo "cache-key=$CACHE_KEY" >> "$GITHUB_OUTPUT"
             shell: bash
