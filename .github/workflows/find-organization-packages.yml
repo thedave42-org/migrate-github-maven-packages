@@ -87,31 +87,32 @@ jobs:
           echo "-------------" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.org-packages.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
   
-  # upload-assets:
-  #   needs: get-packages
-  #   runs-on: ubuntu-latest
+  upload-assets:
+    needs: get-packages
+    runs-on: ubuntu-latest
 
-  #   strategy:
-  #       matrix:
-  #         pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
+    strategy:
+      max-parallel: 1
+      matrix:
+        pkg: ${{fromJson(needs.get-packages.outputs.packages)}}
 
-  #   steps:
-  #     - name: Check out code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
 
-  #     # retrieve cache
-  #     - name: Restore JSON files from cache
-  #       uses: actions/cache@v4.0.1
-  #       with:
-  #         key: |
-  #           ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
-  #         path: |
-  #           *.json
-  #         fail-on-cache-miss: true
+      # retrieve cache
+      - name: Restore JSON files from cache
+        uses: actions/cache@v4.0.1
+        with:
+          key: |
+            ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
+          path: |
+            *.json
+          fail-on-cache-miss: true
             
-  #     - name: Read package ${{ matrix.pkg.name }} 
-  #       run: |
-  #         echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
-  #         echo "Reading from file ${{ matrix.pkg.file }}"
-  #         cat ${{ matrix.pkg.file }}
+      - name: Read package ${{ matrix.pkg.name }} 
+        run: |
+          echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
+          echo "Reading from file ${{ matrix.pkg.file }}"
+          cat ${{ matrix.pkg.file }}
           
