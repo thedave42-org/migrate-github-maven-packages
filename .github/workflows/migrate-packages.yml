@@ -10,10 +10,10 @@ jobs:
     migrate-packages:
         if: github.event.label.name == 'start-migration'
         runs-on: ubuntu-latest
-        outputs:
-          cache-key: ${{ steps.extract-params.outputs.cache-key }}
-          to-org: ${{ steps.extract-params.outputs.to-org }}
-          from-org: ${{ steps.extract-params.outputs.from-org }}
+        # outputs:
+        #   cache-key: ${{ steps.extract-params.outputs.cache-key }}
+        #   to-org: ${{ steps.extract-params.outputs.to-org }}
+        #   from-org: ${{ steps.extract-params.outputs.from-org }}
 
         steps:        
           - name: Extract parameters from issue body
@@ -36,15 +36,15 @@ jobs:
                 echo "$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
 
-          # - name: Filter package list
-          #   id: filter-packages
-          #   run: |
-          #     SELECTED_TASKS=${{ steps.extract-params.outputs.selected-tasks }}
-          #     PACKAGE_LIST=${{ steps.extract-params.outputs.package-list }}
-          #     FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
-          #     echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
-          #     echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
-          #   shell: bash
+          - name: Filter package list
+            id: filter-packages
+            run: |
+              SELECTED_TASKS=${{ steps.extract-params.outputs.selected-tasks }}
+              PACKAGE_LIST=${{ steps.extract-params.outputs.package-list }}
+              FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
+              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
+              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+            shell: bash
   
     # upload-assets:
     #   needs: migrate-packages
