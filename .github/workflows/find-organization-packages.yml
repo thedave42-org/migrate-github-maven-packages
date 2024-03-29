@@ -64,8 +64,8 @@ jobs:
           fi
           echo "" >> task-list.md
           echo "<!-- Do not remove the below comment. -->"
-          echo "<!-- package-list=\"${{ toJSON(steps.org-packages.outputs.packages) }}\" -->" >> task-list.md
-          echo "<!-- cache-key=\"${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json\" -->" >> task-list.md
+          echo "<!-- package-list='${{ toJSON(steps.org-packages.outputs.packages) }}' -->" >> task-list.md
+          echo "<!-- cache-key='${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json' -->" >> task-list.md
           gh issue edit ${{ github.event.issue.number }} --body "$(cat task-list.md)"
         shell: bash
         env:
