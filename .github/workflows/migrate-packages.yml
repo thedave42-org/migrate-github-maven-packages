@@ -21,7 +21,7 @@ jobs:
             run: |
                 FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; getline; print; exit}')
                 TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; getline; print; exit}')
-                PACKAGE_LIST=$(echo '${{ github.event.issue.body }}' | awk '/<!-- package-list="/{print; exit}' | sed 's/<!-- //;s/ -->//')
+                PACKAGE_LIST=$(echo '${{ github.event.issue.body }}' | awk '/<!-- package-list="/{print; exit}' | sed 's/<!-- //;s/ -->//' | tr -d '"')
                 CACHE_KEY=$(echo '${{ github.event.issue.body }}' | awk '/<!-- cache-key="/{print; exit}' | sed 's/<!-- //;s/ -->//')
                 TASKS=$(echo '${{ github.event.issue.body }}' | awk '/### Package List/,/> **Note**/' | grep '\[x\]' | sed -n 's/.*\] \(.*\) (\(.*\))/\1/p' | jq -R -s -c 'split("\n")[:-1]')
                 echo "from-org=$FROM_ORG" >> "$GITHUB_OUTPUT"
@@ -39,7 +39,7 @@ jobs:
           - name: Filter package list
             id: filter-packages
             run: |
-              FILTERED_PACKAGES=$(echo '${{ steps.extract-params.outputs.package-list }}' | tr -d '"' | jq --argjson tasks '${{ steps.extract-params.outputs.selected-tasks }}' '[.[] | select(.name as $name | $tasks | index($name))]')
+              FILTERED_PACKAGES=$(echo '${{ steps.extract-params.outputs.package-list }}' | jq --argjson tasks '${{ steps.extract-params.outputs.selected-tasks }}" '[.[] | select(.name as $name | $tasks | index($name))]')
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
