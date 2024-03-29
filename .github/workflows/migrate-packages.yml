@@ -36,15 +36,15 @@ jobs:
                 echo "$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
 
-          - name: Filter package list
-            id: filter-packages
-            run: |
-              SELECTED_TASKS=${{ steps.extract-params.outputs.selected-tasks }}
-              PACKAGE_LIST=${{ steps.extract-params.outputs.package-list }}
-              FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
-              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
-              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
-            shell: bash
+          # - name: Filter package list
+          #   id: filter-packages
+          #   run: |
+          #     SELECTED_TASKS=${{ steps.extract-params.outputs.selected-tasks }}
+          #     PACKAGE_LIST=${{ steps.extract-params.outputs.package-list }}
+          #     FILTERED_PACKAGES=$(echo "$PACKAGE_LIST" | jq --argjson tasks "$SELECTED_TASKS" '[.[] | select(.name as $name | $tasks | index($name))]')
+          #     echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
+          #     echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+          #   shell: bash
   
     # upload-assets:
     #   needs: migrate-packages
