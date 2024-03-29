@@ -10,10 +10,11 @@ jobs:
     migrate-packages:
         if: github.event.label.name == 'start-migration'
         runs-on: ubuntu-latest
-        # outputs:
-        #   cache-key: ${{ steps.extract-params.outputs.cache-key }}
-        #   to-org: ${{ steps.extract-params.outputs.to-org }}
-        #   from-org: ${{ steps.extract-params.outputs.from-org }}
+        outputs:
+          cache-key: ${{ steps.extract-params.outputs.cache-key }}
+          to-org: ${{ steps.extract-params.outputs.to-org }}
+          from-org: ${{ steps.extract-params.outputs.from-org }}
+          package-list: ${{ steps.filter-packages.outputs.filtered-packages }}
 
         steps:        
           - name: Extract parameters from issue body
@@ -44,31 +45,31 @@ jobs:
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
   
-    # upload-assets:
-    #   needs: migrate-packages
-    #   runs-on: ubuntu-latest
+    upload-assets:
+      needs: migrate-packages
+      runs-on: ubuntu-latest
 
-    #   strategy:
-    #     max-parallel: 1
-    #     matrix:
-    #       pkg: ${{fromJson(needs.migrate-packages.outputs.package-list)}}
+      strategy:
+        max-parallel: 1
+        matrix:
+          pkg: ${{fromJson(needs.migrate-packages.outputs.package-list)}}
 
-    #   steps:
-    #     - name: Check out code
-    #       uses: actions/checkout@v4
+      steps:
+        - name: Check out code
+          uses: actions/checkout@v4
 
-    #     # retrieve cache
-    #     - name: Restore JSON files from cache
-    #       uses: actions/cache@v4.0.1
-    #       with:
-    #         key: |
-    #           ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
-    #         path: |
-    #           *.json
-    #         fail-on-cache-miss: true
+        # retrieve cache
+        - name: Restore JSON files from cache
+          uses: actions/cache@v4.0.1
+          with:
+            key: |
+              ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
+            path: |
+              *.json
+            fail-on-cache-miss: true
               
-    #     - name: Read package ${{ matrix.pkg.name }} 
-    #       run: |
-    #         echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
-    #         echo "Reading from file ${{ matrix.pkg.file }}"
-    #         cat ${{ matrix.pkg.file }}
+        - name: Read package ${{ matrix.pkg.name }} 
+          run: |
+            echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
+            echo "Reading from file ${{ matrix.pkg.file }}"
+            cat ${{ matrix.pkg.file }}
