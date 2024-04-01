@@ -30,19 +30,19 @@ jobs:
                 echo "$CACHE_KEY" >> "$GITHUB_OUTPUT"
                 echo "selected-tasks=$TASKS" >> "$GITHUB_OUTPUT"
                 echo "$PACKAGE_LIST" >> "$GITHUB_OUTPUT"
-                echo "from-org=$FROM_ORG" >> "$GITHUB_STEP_SUMMARY"
-                echo "to-org=$TO_ORG" >> "$GITHUB_STEP_SUMMARY"
-                echo "$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
-                echo "selected-tasks=$TASKS" >> "$GITHUB_STEP_SUMMARY"
-                echo "$PACKAGE_LIST" >> "$GITHUB_STEP_SUMMARY"
+                # echo "from-org=$FROM_ORG" >> "$GITHUB_STEP_SUMMARY"
+                # echo "to-org=$TO_ORG" >> "$GITHUB_STEP_SUMMARY"
+                # echo "$CACHE_KEY" >> "$GITHUB_STEP_SUMMARY"
+                # echo "selected-tasks=$TASKS" >> "$GITHUB_STEP_SUMMARY"
+                # echo "$PACKAGE_LIST" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
 
-          - name: Filter package list
+          - name: Find selected packages
             id: filter-packages
             run: |
               FILTERED_PACKAGES=$(echo '${{ fromJson(steps.extract-params.outputs.package-list) }}' | jq -c --argjson tasks '${{ steps.extract-params.outputs.selected-tasks }}' '[.[] | select(.name as $name | $tasks | index($name))]')
               echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_OUTPUT"
-              echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+              # echo "filtered-packages=$FILTERED_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
             shell: bash
   
     upload-assets:
@@ -88,6 +88,9 @@ jobs:
         issues: write
 
       steps:
+        - name: Check out code
+          uses: actions/checkout@v4
+        
         - name: Report status
           run: |
             echo "run id of previous job: ${{ needs.upload-assets.outputs.run-id }}"
@@ -102,7 +105,7 @@ jobs:
             # List all jobs for this workflow run
             JOBS_JSON=$(gh api repos/$OWNER_REPO/actions/runs/$RUN_ID/jobs)
 
-            echo "Jobs JSON: $JOBS_JSON" >> $GITHUB_STEP_SUMMARY
+            # echo "Jobs JSON: $JOBS_JSON" >> $GITHUB_STEP_SUMMARY
             
             # Find the job ID for the job with the name that starts with "upload-assets" and create a json array of the job IDs
             JOB_ID=$(echo $JOBS_JSON | jq -c '[.jobs[] | select(.name | startswith("'$JOB_NAME'")) | .id]')
