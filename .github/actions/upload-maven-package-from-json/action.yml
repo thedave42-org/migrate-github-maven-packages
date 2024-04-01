@@ -25,6 +25,10 @@ inputs:
         description: 'A delay in ms between GraphQL API requests for rate limiting'
         default: '500'
         required: false
+outputs:
+    results:
+        description: 'An object that shows the total results.filesUploaded, results.filesExistAndMatch, and results.filesExistAndNoMatch'
+
 runs:
     using: 'node20'
     main: 'dist/index.mjs'

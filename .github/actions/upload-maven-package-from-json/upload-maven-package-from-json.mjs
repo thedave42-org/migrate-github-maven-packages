@@ -3,7 +3,7 @@ dotenvConfig();
 
 import axios from 'axios';
 import crypto from 'crypto';
-import fs from 'fs';
+import fs, { exists } from 'fs';
 import xml2js from 'xml2js';
 import path from 'path';
 import { Octokit } from "@octokit/core";
@@ -130,6 +130,12 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
     console.log(`Starting import of ${packageImportJson.versions.length} versions...`);
     let files = [];
 
+    const results = {
+        filesUploaded: 0,
+        filesExistAndMatch: 0,
+        filesExistAndNoMatch: 0
+    };
+
     // Use a for loop to loop through the versions
     for (let i = 0; i < packageImportJson.versions.length; i++) {
         const version = packageImportJson.versions[i];
@@ -198,8 +204,10 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             
                 if (downloadHash === localHash) {
                     console.log(`\t${j+1}: ${fileName} not uploaded. File already exists and is the same.`);
+                    results.filesExistAndMatch++;
                 } else {
                     console.log(`\t${j+1}: ${fileName} not uploaded. File already exists but is different.`);
+                    results.filesExistAndNoMatch++;
                 }
             
                 // Delete the downloaded file
@@ -217,12 +225,9 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
                 });
 
                 console.log(`\t${j+1}: ${fileName} uploaded.`);
-
-
+                results.filesUploaded++;
             }
 
-
-            
             //Delete the file
             fs.unlink(filePath, (err) => {
                 if (err) {
@@ -232,4 +237,6 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
             });
         }
     }
+
+    core.setOutput('results', results);
 })();

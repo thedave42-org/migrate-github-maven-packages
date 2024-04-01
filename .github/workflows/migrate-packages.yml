@@ -87,11 +87,16 @@ jobs:
               
         - name: Upload ${{ matrix.pkg.name }} to ${{ needs.migrate-packages.outputs.to-org }}
           uses: ./.github/actions/upload-maven-package-from-json
+          id: upload-maven-package
           with:
             package-import-json-file: ${{ matrix.pkg.file }}
             from-org-pat: ${{ secrets.FROM_ORG_PAT }}
             to-org: ${{ needs.migrate-packages.outputs.to-org }}
             to-org-pat: ${{ secrets.TO_ORG_PAT }}
+
+        - name: Output migration results
+          run: |
+            echo "${{ toJSON(steps.upload-maven-package.outputs.results) }}" >> $GITHUB_STEP_SUMMARY
         
     report-status:
       if: always()
