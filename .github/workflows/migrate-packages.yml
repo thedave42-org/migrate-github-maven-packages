@@ -63,7 +63,7 @@ jobs:
           uses: actions/cache@v4.0.1
           with:
             key: |
-              ${{ github.workflow }}-${{ github.run_id }}-${{ github.run_attempt }}-json
+              ${{ needs.migrate-packages.outputs.cache-key }}
             path: |
               *.json
             fail-on-cache-miss: true
