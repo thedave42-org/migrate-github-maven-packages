@@ -23,7 +23,7 @@ jobs:
                 FROM_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Source Organization Name/{getline; getline; print; exit}')
                 TO_ORG=$(echo '${{ github.event.issue.body }}' | awk '/### Destination Organization Name/{getline; getline; print; exit}')
                 PACKAGE_LIST=$(echo '${{ github.event.issue.body }}' | awk '/<!-- package-list="/{print; exit}' | sed 's/<!-- //;s/ -->//')
-                CACHE_KEY=$(echo '${{ github.event.issue.body }}' | awk '/<!-- cache-key="/{print; exit}' | sed 's/<!-- //;s/ -->//' | td -d 'cache-key=' | tr -d '"')
+                CACHE_KEY=$(echo '${{ github.event.issue.body }}' | awk '/<!-- cache-key="/{print; exit}' | sed 's/<!-- //;s/ -->//' | tr -d 'cache-key=' | tr -d '"')
                 TASKS=$(echo '${{ github.event.issue.body }}' | awk '/### Package List/,/> **Note**/' | grep '\[x\]' | sed -n 's/.*\] \(.*\) (\(.*\))/\1/p' | jq -R -s -c 'split("\n")[:-1]')
                 echo "from-org=$FROM_ORG" >> "$GITHUB_OUTPUT"
                 echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
