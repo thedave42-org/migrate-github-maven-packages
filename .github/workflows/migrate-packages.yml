@@ -68,8 +68,16 @@ jobs:
               *.json
             fail-on-cache-miss: true
               
-        - name: Read package ${{ matrix.pkg.name }} 
-          run: |
-            echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
-            echo "Reading from file ${{ matrix.pkg.file }}"
-            cat ${{ matrix.pkg.file }}
+        # - name: Read package ${{ matrix.pkg.name }} 
+        #   run: |
+        #     echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
+        #     echo "Reading from file ${{ matrix.pkg.file }}"
+        #     cat ${{ matrix.pkg.file }}
+
+        - name: Upload ${{ matrix.pkg.name }} to ${{ needs.migrate-packages.outputs.to-org }}
+          uses: ./.github/actions/upload-maven-package-from-json
+          with:
+            package-import-json-file: ${{ matrix.pkg.file }}
+            from-org-pat: ${{ secrets.FROM_ORG_PAT }}
+            to-org: ${{ needs.migrate-packages.outputs.to-org }}
+            to-org-pat: ${{ secrets.TO_ORG_PAT }}

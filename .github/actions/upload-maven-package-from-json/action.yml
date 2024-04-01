@@ -10,22 +10,21 @@ inputs:
     to-org-pat:
         description: 'Token with read:packages scope for the Organization where the package should be copied'
         required: true
+    package-import-json-file:
+        description: 'The JSON file that hold the migration information for the source package'
+        required: true
     github-maven-url:
         description: 'The base url of the GitHub Packages Maven repo'
         default: 'https://maven.pkg.github.com'
         required: false
     graphql-query-size:
         description: 'The number of records per page request - reduce if getting timeouts'
-        default: '50'
+        default: '20'
         required: false
     graphql-query-delay:
-        description: 'A delay between GraphQL API requests for rate limiting'
-        default: '0'
+        description: 'A delay in ms between GraphQL API requests for rate limiting'
+        default: '500'
         required: false
-
-outputs:
-    packages:
-        description: 'A list of the JSON files containing asset download lists'
 runs:
     using: 'node20'
     main: 'dist/index.mjs'
