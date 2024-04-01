@@ -121,6 +121,7 @@ jobs:
               JOB_ID=$(_jq '.id')
               JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2)
               JOB_LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$JOB_ID/logs)
+              JOB_STATUS=$(_jq '.status')
               JOB_CONCLUSION=$(_jq '.conclusion')
               JOB_STARTED_AT=$(_jq '.started_at')
               JOB_COMPLETED_AT=$(_jq '.completed_at')
