@@ -126,7 +126,7 @@ jobs:
               JOB_COMPLETED_AT=$(_jq '.completed_at')
               
               # Use the gh cli to post a comment to the issue with the logs
-              gh issues comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>$JOB_LOGS</details>"
+              gh issue comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>$JOB_LOGS</details>"
             done
           shell: bash
           env:
