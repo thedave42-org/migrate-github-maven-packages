@@ -54,7 +54,16 @@ jobs:
         matrix:
           pkg: ${{fromJson(needs.migrate-packages.outputs.package-list)}}
 
+      outputs:
+        job-id: 
+
       steps:
+        - name: Set job id
+          id: set-job-id
+          run: |
+            echo "job-id=${{ github.job }}" >> "$GITHUB_OUTPUT"
+            echo "job-id=${{ github.job }}" >> "$GITHUB_STEP_SUMMARY"
+
         - name: Check out code
           uses: actions/checkout@v4
 
@@ -81,3 +90,13 @@ jobs:
             from-org-pat: ${{ secrets.FROM_ORG_PAT }}
             to-org: ${{ needs.migrate-packages.outputs.to-org }}
             to-org-pat: ${{ secrets.TO_ORG_PAT }}
+
+    report-status:
+      if: always()
+      needs: upload-assets
+      runs-on: ubuntu-latest
+      steps:
+        - name: Report status
+          run: |
+            echo "Job id of previous job: ${{ needs.upload-assets.outputs.job-id }}"
+          shell: bash
