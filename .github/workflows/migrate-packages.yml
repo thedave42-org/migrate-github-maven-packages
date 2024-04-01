@@ -27,7 +27,7 @@ jobs:
                 TASKS=$(echo '${{ github.event.issue.body }}' | awk '/### Package List/,/> **Note**/' | grep '\[x\]' | sed -n 's/.*\] \(.*\) (\(.*\))/\1/p' | jq -R -s -c 'split("\n")[:-1]')
                 echo "from-org=$FROM_ORG" >> "$GITHUB_OUTPUT"
                 echo "to-org=$TO_ORG" >> "$GITHUB_OUTPUT"
-                echo "cache-key=$CACHE_KEY" >> $GITHUB_OUTPUT
+                echo "$CACHE_KEY" >> $GITHUB_OUTPUT
                 echo "selected-tasks=$TASKS" >> "$GITHUB_OUTPUT"
                 echo "$PACKAGE_LIST" >> "$GITHUB_OUTPUT"
                 echo "from-org=$FROM_ORG" >> "$GITHUB_STEP_SUMMARY"
