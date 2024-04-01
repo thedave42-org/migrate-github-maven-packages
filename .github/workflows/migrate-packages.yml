@@ -49,9 +49,6 @@ jobs:
       needs: migrate-packages
       runs-on: ubuntu-latest
 
-      permissions:
-        actions: read
-
       strategy:
         max-parallel: 1
         matrix:
@@ -74,12 +71,6 @@ jobs:
               *.json
             fail-on-cache-miss: true
               
-        # - name: Read package ${{ matrix.pkg.name }} 
-        #   run: |
-        #     echo "Ready to migrate: ${{ matrix.pkg.toOwnerRepoExists }}"
-        #     echo "Reading from file ${{ matrix.pkg.file }}"
-        #     cat ${{ matrix.pkg.file }}
-
         - name: Upload ${{ matrix.pkg.name }} to ${{ needs.migrate-packages.outputs.to-org }}
           uses: ./.github/actions/upload-maven-package-from-json
           with:
@@ -88,6 +79,20 @@ jobs:
             to-org: ${{ needs.migrate-packages.outputs.to-org }}
             to-org-pat: ${{ secrets.TO_ORG_PAT }}
         
+    report-status:
+      if: always()
+      needs: upload-assets
+      runs-on: ubuntu-latest
+      permissions:
+        actions: read
+        issues: write
+
+      steps:
+        - name: Report status
+          run: |
+            echo "run id of previous job: ${{ needs.upload-assets.outputs.run-id }}"
+          shell: bash
+
         - name: Get job logs
           run: |
             RUN_ID=${{ github.run_id }}
@@ -99,23 +104,19 @@ jobs:
 
             echo "Jobs JSON: $JOBS_JSON" >> $GITHUB_STEP_SUMMARY
             
-            # Find the job ID for the job with the name "upload-assets"
-            JOB_ID=$(echo $JOBS_JSON | jq -r '.jobs[] | select(.name=="'$JOB_NAME'") | .id')
+            # Find the job ID for the job with the name that starts with "upload-assets" and create a json array of the job IDs
+            JOB_ID=$(echo $JOBS_JSON | jq -c '[.jobs[] | select(.name | startswith("'$JOB_NAME'")) | .id]')
 
-            echo "Job ID: $JOB_ID" >> $GITHUB_STEP_SUMMARY
+            echo "Job IDs: $JOB_ID" >> $GITHUB_STEP_SUMMARY
             
-            # Get the logs for this job
-            gh api repos/$OWNER/$REPO/actions/jobs/$JOB_ID/logs
+            # Loop through the job IDs and get the logs for each job
+            for id in $(echo $JOB_ID | jq -r '.[]'); do
+              echo "Job ID: $id" >> $GITHUB_STEP_SUMMARY
+              LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$id/logs)
+              echo "Logs: $LOGS" >> $GITHUB_STEP_SUMMARY
+              # post the log as a comment on the issue
+              gh issue comment ${{ github.event.issue.number }} -b "$LOGS"
+            done
           shell: bash
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    report-status:
-      if: always()
-      needs: upload-assets
-      runs-on: ubuntu-latest
-      steps:
-        - name: Report status
-          run: |
-            echo "run id of previous job: ${{ needs.upload-assets.outputs.run-id }}"
-          shell: bash
