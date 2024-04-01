@@ -108,17 +108,25 @@ jobs:
             # echo "Jobs JSON: $JOBS_JSON" >> $GITHUB_STEP_SUMMARY
             
             # Find the job ID for the job with the name that starts with "upload-assets" and create a json array of the job IDs
-            JOB_ID=$(echo $JOBS_JSON | jq -c '[.jobs[] | select(.name | startswith("'$JOB_NAME'")) | .id]')
+            JOB_ID=$(echo $JOBS_JSON | jq '.jobs[] | select(.name | startswith("upload-assets")) | {id: .id, name: .name, workflow_name: .workflow_name, status: .status, conclusion: .conclusion, started_at: .started_at, completed_at: .completed_at}')
 
             echo "Job IDs: $JOB_ID" >> $GITHUB_STEP_SUMMARY
             
-            # Loop through the job IDs and get the logs for each job
-            for id in $(echo $JOB_ID | jq -r '.[]'); do
-              echo "Job ID: $id" >> $GITHUB_STEP_SUMMARY
-              LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$id/logs)
-              # echo "Logs: $LOGS" >> $GITHUB_STEP_SUMMARY
-              # post the log as a comment on the issue
-              gh issue comment ${{ github.event.issue.number }} -b "$LOGS"
+            # Loop through items in the JSON array, and for each item get the id, name, workflow_name, status, conclusion, started_at, completed_at
+            # use the id to get the logs for the job
+            for row in $(echo "${JOB_ID}" | jq -r '.[] | @base64'); do
+              _jq() {
+                echo ${row} | base64 --decode | jq -r ${1}
+              }
+              JOB_ID=$(_jq '.id')
+              JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2)
+              JOB_LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$JOB_ID/logs)
+              JOB_CONCLUSION=$(_jq '.conclusion')
+              JOB_STARTED_AT=$(_jq '.started_at')
+              JOB_COMPLETED_AT=$(_jq '.completed_at')
+              
+              # Use the gh cli to post a comment to the issue with the logs
+              gh issues comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>$JOB_LOGS</details>"
             done
           shell: bash
           env:
