@@ -10,13 +10,27 @@ jobs:
     migrate-packages:
         if: github.event.label.name == 'start-migration'
         runs-on: ubuntu-latest
+
+        permissions:
+          issues: write
+        
         outputs:
           cache-key: ${{ steps.extract-params.outputs.cache-key }}
           to-org: ${{ steps.extract-params.outputs.to-org }}
           from-org: ${{ steps.extract-params.outputs.from-org }}
           package-list: ${{ steps.filter-packages.outputs.filtered-packages }}
 
-        steps:        
+        steps:
+          - name: Check out code
+            uses: actions/checkout@v4
+
+          - name: Update issue labels
+            run: |
+              gh issue update ${{ github.event.issue.number }} --add-label "in-progress"
+            env:
+              GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
           - name: Extract parameters from issue body
             id: extract-params
             run: |
@@ -141,3 +155,10 @@ jobs:
           shell: bash
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Update issue labels
+          run: |
+            gh issue edit ${{ github.event.issue.number }} --remove-label "start-migration,in-progress"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
