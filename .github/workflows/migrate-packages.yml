@@ -91,12 +91,11 @@ jobs:
         - name: Get job logs
           run: |
             RUN_ID=${{ github.run_id }}
-            OWNER=${{ github.repository_owner }}
-            REPO=${{ github.repository }}
+            OWNER_REPO=${{ github.repository }}
             JOB_NAME="migrate-packages"
             
             # List all jobs for this workflow run
-            JOBS_JSON=$(gh api repos/$OWNER/$REPO/actions/runs/$RUN_ID/jobs)
+            JOBS_JSON=$(gh api repos/$OWNER_REPO/actions/runs/$RUN_ID/jobs)
             
             # Find the job ID for the job with the name "migrate-packages"
             JOB_ID=$(echo $JOBS_JSON | jq -r '.jobs[] | select(.name=="'$JOB_NAME'") | .id')
