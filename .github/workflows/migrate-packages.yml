@@ -127,9 +127,10 @@ jobs:
               JOB_COMPLETED_AT=$(_jq '.completed_at')
 
               JOB_LOGS=$(echo "$JOB_LOGS" | awk '{print "| " $1 " | " substr($0, index($0,$2)) " |"}')
+              TABLE="\n\n| Timestamp | Log |\n| --- | --- |\n$JOB_LOGS\n\n"
               
               # Use the gh cli to post a comment to the issue with the logs
-              gh issue comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>|---|---|\n$JOB_LOGS|---|---|\n</details>"
+              gh issue comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>$TABLE</details>"
             done
           shell: bash
           env:
