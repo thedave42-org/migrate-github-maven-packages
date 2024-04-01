@@ -119,7 +119,7 @@ jobs:
                 echo ${row} | base64 --decode | jq -r ${1}
               }
               JOB_ID=$(_jq '.id')
-              JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2)
+              JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2 | tr -d '(')
               JOB_LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$JOB_ID/logs)
               JOB_STATUS=$(_jq '.status')
               JOB_CONCLUSION=$(_jq '.conclusion')
