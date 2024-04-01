@@ -126,16 +126,7 @@ jobs:
               JOB_STARTED_AT=$(_jq '.started_at')
               JOB_COMPLETED_AT=$(_jq '.completed_at')
 
-              # Convert JOB_LOGS to a markdown table with two columns with no header row
-              # each line of the logs is a row in the table
-              # the first column if the first word of the line
-              # the second column is the rest of the line
-              JOB_LOGS=$(echo "$JOB_LOGS" | jq -r '.[] | @base64' | while read row; do
-                _jq() {
-                  echo ${row} | base64 --decode | jq -r ${1}
-                }
-                echo "* $(_jq '.line')"
-              done)
+              JOB_LOGS=$(echo "$JOB_LOGS" | awk '{print "| " $1 " | " substr($0, index($0,$2)) " |"}')
               
               # Use the gh cli to post a comment to the issue with the logs
               gh issue comment ${{ github.event.issue.number }} -b "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>|---|---|\n$JOB_LOGS|---|---|\n</details>"
