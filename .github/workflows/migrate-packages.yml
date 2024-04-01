@@ -113,7 +113,7 @@ jobs:
             for id in $(echo $JOB_ID | jq -r '.[]'); do
               echo "Job ID: $id" >> $GITHUB_STEP_SUMMARY
               LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$id/logs)
-              echo "Logs: $LOGS" >> $GITHUB_STEP_SUMMARY
+              # echo "Logs: $LOGS" >> $GITHUB_STEP_SUMMARY
               # post the log as a comment on the issue
               gh issue comment ${{ github.event.issue.number }} -b "$LOGS"
             done
