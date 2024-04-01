@@ -126,7 +126,7 @@ jobs:
               JOB_STARTED_AT=$(_jq '.started_at')
               JOB_COMPLETED_AT=$(_jq '.completed_at')
 
-              JOB_LOGS=$(echo "$JOB_LOGS" | awk '{print "| " $1 " | " substr($0, index($0,$2)) " |"}')
+              JOB_LOGS=$(echo "$JOB_LOGS" | awk '{print "| `" $1 "` | `" substr($0, index($0,$2)) "` |"}')
               echo "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>" > table.md
               echo "" >> table.md
               echo "| Timestamp | Log |" >> table.md
