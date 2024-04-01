@@ -58,7 +58,7 @@ jobs:
           pkg: ${{fromJson(needs.migrate-packages.outputs.package-list)}}
 
       outputs:
-        job-id: ${{ github.job}}
+        run-id: ${{ github.run_id }}
 
       steps:
         - name: Check out code
@@ -113,5 +113,5 @@ jobs:
       steps:
         - name: Report status
           run: |
-            echo "Job id of previous job: ${{ needs.upload-assets.outputs.job-id }}"
+            echo "run id of previous job: ${{ needs.upload-assets.outputs.run-id }}"
           shell: bash
