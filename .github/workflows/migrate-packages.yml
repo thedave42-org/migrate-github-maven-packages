@@ -26,7 +26,7 @@ jobs:
 
           - name: Update issue labels
             run: |
-              gh issue update ${{ github.event.issue.number }} --add-label "in-progress"
+              gh issue edit ${{ github.event.issue.number }} --add-label "in-progress"
             env:
               GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
