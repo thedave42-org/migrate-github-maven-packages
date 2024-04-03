@@ -101,15 +101,19 @@ jobs:
 
         - name: Add results comment to issue
           run: |
-            echo "### Package ${{ matrix.pkg.name }} from ${{ needs.migrate-packages.outputs.from-org }} to ${{ needs.migrate-packages.outputs.to-org }} migrated successfully." > comment.md
+            echo "### Package ${{ matrix.pkg.name }} migrated successfully." > comment.md
+            echo "" >> comment.md
+            echo "| Source Organization | Destination Organization |" >> comment.md
+            echo "|---------------------|--------------------------|" >> comment.md
+            echo "| ${{ needs.migrate-packages.outputs.from-org }} | ${{ needs.migrate-packages.outputs.to-org }} |" >> comment.md
             echo "" >> comment.md
             echo "Run id ${{ github.run_id }} attempt ${{ github.run_attempt }}" >> comment.md
             echo "" >> comment.md
             echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped |" >> comment.md
             echo "|------------------|-----------------------|-------------------------|" >> comment.md
-            echo "| ${{ fromJson(steps.upload-maven-package.outputs.results).filesUploaded }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndMatch }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndNoMatch }} |" >> comment.md
+            echo "| ${{ fromJson(steps.upload-maven-package.outputs.results).filesUploaded }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndMatch }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndNoMatch }} |" >> comment.md
             echo "" >> comment.md
-            echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or no the source and destination file are are same.  Please see the detailed logs for run id ${{ github.run_id }} attempt ${{ github.run_attempt }}." >> comment.md
+            echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or not the source and destination file are are same but will not attempt to copy the file.  Please see the detailed logs for run id ${{ github.run_id }} attempt ${{ github.run_attempt }} for a list of the specific files in each category." >> comment.md
             gh issue comment ${{ github.event.issue.number }} -F comment.md
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
