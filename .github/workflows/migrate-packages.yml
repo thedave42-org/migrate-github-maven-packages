@@ -69,6 +69,7 @@ jobs:
 
       outputs:
         run-id: ${{ github.run_id }}
+        run-attempt: ${{ github.run_id }}
 
       steps:
         - name: Check out code
@@ -102,12 +103,14 @@ jobs:
           run: |
             echo "### Package ${{ matrix.pkg.name }} from ${{ needs.migrate-packages.outputs.from-org }} to ${{ needs.migrate-packages.outputs.to-org }} migrated successfully." > comment.md
             echo "" >> comment.md
+            echo "Run id ${{ github.run_id }} attempt ${{ github.run_attempt }}" >> comment.md
+            echo "" >> comment.md
             echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped |" >> comment.md
             echo "|------------------|-----------------------|-------------------------|" >> comment.md
             echo "| ${{ steps.upload-maven-package.outputs.results.filesUploaded }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndMatch }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndNoMatch }} |" >> comment.md
             echo "" >> comment.md
-            echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or no the source and destination file are are same.  Please see the detailed logs for more information." >> comment.md
-            gh issue comment ${{ github.event.issue.number }} -b "Migration results: ${{ toJSON(steps.upload-maven-package.outputs.results) }}"
+            echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or no the source and destination file are are same.  Please see the detailed logs for run id ${{ github.run_id }} attempt ${{ github.run_attempt }}." >> comment.md
+            gh issue comment ${{ github.event.issue.number }} -F comment.md
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
@@ -161,7 +164,8 @@ jobs:
               JOB_COMPLETED_AT=$(_jq '.completed_at')
 
               JOB_LOGS=$(echo "$JOB_LOGS" | awk '{print "| `" $1 "` | `" substr($0, index($0,$2)) "` |"}')
-              echo "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>" > table.md
+              echo "### Logs for run id ${{ needs.upload-assets.outputs.run-id }} attempt ${{ needs.upload-assets.outputs.run-attempt }}" > table.md
+              echo "<details><summary>$JOB_NAME ($JOB_STATUS/$JOB_CONCLUSION): $JOB_STARTED_AT - $JOB_COMPLETED_AT</summary>" >> table.md
               echo "" >> table.md
               echo "| Timestamp | Log |" >> table.md
               echo "| --- | --- |" >> table.md
