@@ -30,7 +30,6 @@ jobs:
             env:
               GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
           - name: Extract parameters from issue body
             id: extract-params
             run: |
@@ -97,6 +96,22 @@ jobs:
         - name: Output migration results
           run: |
             echo "${{ toJSON(steps.upload-maven-package.outputs.results) }}" >> $GITHUB_STEP_SUMMARY
+          shell: bash
+
+        - name: Add results comment to issue
+          run: |
+            echo "### Package ${{ matrix.pkg.name }} from ${{ needs.migrate-packages.outputs.from-org }} to ${{ needs.migrate-packages.outputs.to-org }} migrated successfully." > comment.md
+            echo "" >> comment.md
+            echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped |" >> comment.md
+            echo "|------------------|-----------------------|-------------------------|" >> comment.md
+            echo "| ${{ steps.upload-maven-package.outputs.results.filesUploaded }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndMatch }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndNoMatch }} |" >> comment.md
+            echo "" >> comment.md
+            echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or no the source and destination file are are same.  Please see the detailed logs for more information." >> comment.md
+            gh issue comment ${{ github.event.issue.number }} -b "Migration results: ${{ toJSON(steps.upload-maven-package.outputs.results) }}"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+
         
     report-status:
       if: always()
@@ -138,7 +153,7 @@ jobs:
                 echo ${row} | base64 --decode | jq -r ${1}
               }
               JOB_ID=$(_jq '.id')
-              JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2 | tr -d '(')
+              JOB_NAME=$(echo $(_jq '.name') | cut -d ' ' -f 2 | tr -d '(,' )
               JOB_LOGS=$(gh api repos/$OWNER_REPO/actions/jobs/$JOB_ID/logs)
               JOB_STATUS=$(_jq '.status')
               JOB_CONCLUSION=$(_jq '.conclusion')
