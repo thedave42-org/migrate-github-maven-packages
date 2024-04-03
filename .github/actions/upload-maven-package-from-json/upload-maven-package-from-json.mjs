@@ -104,6 +104,20 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
     return files;
 }
 
+const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retryDelay = 1000) => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const uploadResponse = await axios.put(uploadUrl, fileStream, { headers });
+            console.log(`\t${i+1}: File uploaded.`);
+            return uploadResponse;
+        } catch (error) {
+            console.error(`Upload failed. Attempt ${i + 1} of ${maxRetries}. Retrying in ${retryDelay}ms...`);
+            if (i < maxRetries - 1) await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+    }
+    throw new Error('Upload failed after maximum retries.');
+}
+
 (async () => {
     // This might need to change based on input files being too large
     const packageImportJson = JSON.parse(fs.readFileSync(packageImportJsonFile, 'utf8'));
@@ -216,8 +230,9 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
                 // If the file is not found, upload the file
                 const fileStream = fs.createReadStream(filePath);
             
-                const uploadResponse = await axios.put(uploadUrl, fileStream, {
-                    headers: {
+                //const uploadResponse = await axios.put(uploadUrl, fileStream, {
+                const uploadResponse = await retryUpload(uploadUrl, fileStream, {
+                        headers: {
                         Authorization: `Bearer ${toToken}`,
                         'Content-Type': 'application/octet-stream',
                         'Content-Length': fs.statSync(filePath).size
