@@ -121,7 +121,7 @@ jobs:
 
         
     report-status:
-      if: always()
+      if: github.event.label.name == 'start-migration' && always()
       needs: upload-assets
       runs-on: ubuntu-latest
       permissions:
