@@ -69,7 +69,7 @@ jobs:
 
       outputs:
         run-id: ${{ github.run_id }}
-        run-attempt: ${{ github.run_id }}
+        run-attempt: ${{ github.run_attempt }}
 
       steps:
         - name: Check out code
@@ -96,7 +96,7 @@ jobs:
 
         - name: Output migration results
           run: |
-            echo "${{ toJSON(steps.upload-maven-package.outputs.results) }}" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.upload-maven-package.outputs.results }}" >> $GITHUB_STEP_SUMMARY
           shell: bash
 
         - name: Add results comment to issue
@@ -107,7 +107,7 @@ jobs:
             echo "" >> comment.md
             echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped |" >> comment.md
             echo "|------------------|-----------------------|-------------------------|" >> comment.md
-            echo "| ${{ steps.upload-maven-package.outputs.results.filesUploaded }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndMatch }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndNoMatch }} |" >> comment.md
+            echo "| ${{ fromJson(steps.upload-maven-package.outputs.results).filesUploaded }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndMatch }} | ${{ steps.upload-maven-package.outputs.results.filesExistAndNoMatch }} |" >> comment.md
             echo "" >> comment.md
             echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or no the source and destination file are are same.  Please see the detailed logs for run id ${{ github.run_id }} attempt ${{ github.run_attempt }}." >> comment.md
             gh issue comment ${{ github.event.issue.number }} -F comment.md
