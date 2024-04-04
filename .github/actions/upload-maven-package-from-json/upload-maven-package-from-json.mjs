@@ -107,8 +107,8 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
 const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retryDelay = 1000) => {
     for (let i = 0; i < maxRetries; i++) {
         try {
-            const uploadResponse = await axios.put(uploadUrl, fileStream, { headers });
-            console.log(`\t${i+1}: File uploaded.`);
+            const uploadResponse = await axios.put(uploadUrl, fileStream, headers );
+            //console.log(`\t${i+1}: File uploaded.`);
             return uploadResponse;
         } catch (error) {
             console.error(`Upload failed. Attempt ${i + 1} of ${maxRetries}. Retrying in ${retryDelay}ms...`);
