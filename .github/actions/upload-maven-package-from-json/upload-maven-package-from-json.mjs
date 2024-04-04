@@ -227,20 +227,25 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
                 // Delete the downloaded file
                 fs.unlinkSync(downloadPath);
             } catch (error) {
-                // If the file is not found, upload the file
-                const fileStream = fs.createReadStream(filePath);
-            
-                //const uploadResponse = await axios.put(uploadUrl, fileStream, {
-                const uploadResponse = await retryUpload(uploadUrl, fileStream, {
-                        headers: {
-                        Authorization: `Bearer ${toToken}`,
-                        'Content-Type': 'application/octet-stream',
-                        'Content-Length': fs.statSync(filePath).size
-                    }
-                });
+                try {
+                    // If the file is not found, upload the file
+                    const fileStream = fs.createReadStream(filePath);
+                
+                    //const uploadResponse = await axios.put(uploadUrl, fileStream, {
+                    const uploadResponse = await retryUpload(uploadUrl, fileStream, {
+                            headers: {
+                            Authorization: `Bearer ${toToken}`,
+                            'Content-Type': 'application/octet-stream',
+                            'Content-Length': fs.statSync(filePath).size
+                        }
+                    });
 
-                console.log(`\t${j+1}: ${fileName} uploaded.`);
-                results.filesUploaded++;
+                    console.log(`\t${j+1}: ${fileName} uploaded.`);
+                    results.filesUploaded++;
+                }
+                catch (error) {
+                    console.log(`\t${j+1}: ${fileName} failed to upload.`);
+                }
             }
 
             //Delete the file
