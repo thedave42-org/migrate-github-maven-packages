@@ -109,9 +109,9 @@ jobs:
             echo "" >> comment.md
             echo "Run id ${{ github.run_id }} attempt ${{ github.run_attempt }}" >> comment.md
             echo "" >> comment.md
-            echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped |" >> comment.md
-            echo "|------------------|-----------------------|-------------------------|" >> comment.md
-            echo "| ${{ fromJson(steps.upload-maven-package.outputs.results).filesUploaded }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndMatch }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndNoMatch }} |" >> comment.md
+            echo "| New Files Copied | Matched Files Skipped | Unmatched Files Skipped | Signature Files Skipped |" >> comment.md
+            echo "|------------------|-----------------------|-------------------------|------------------------ |" >> comment.md
+            echo "| ${{ fromJson(steps.upload-maven-package.outputs.results).filesUploaded }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndMatch }} | ${{ fromJson(steps.upload-maven-package.outputs.results).filesExistAndNoMatch }} | ${{ fromJson(steps.upload-maven-package.outputs.results).signatureAssetInSource }} |" >> comment.md
             echo "" >> comment.md
             echo "> Note: The migration only copies files that do not exist in the destination repository.  For files that exist, the tool will report whether or not the source and destination file are are same but will not attempt to copy the file.  Please see the detailed logs for run id ${{ github.run_id }} attempt ${{ github.run_attempt }} for a list of the specific files in each category." >> comment.md
             gh issue comment ${{ github.event.issue.number }} -F comment.md

@@ -60,6 +60,12 @@ const hashFile = (path) => {
     return hash.digest('hex');
 };
 
+const signatureTypes = ['md5', 'sha1', 'sha256'];
+
+const isSignatureFile = (fileName) => {
+    return signatureTypes.some(type => fileName.toLowerCase().endsWith(type));
+}
+
 // Create method to recursively get all the versions of a package
 const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) => {
     const query = `
@@ -147,7 +153,8 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
     const results = {
         filesUploaded: 0,
         filesExistAndMatch: 0,
-        filesExistAndNoMatch: 0
+        filesExistAndNoMatch: 0,
+        signatureAssetInSource: 0
     };
 
     // Use a for loop to loop through the versions
@@ -248,6 +255,10 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
                 }
             }
 
+            if (isSignatureFile(fileName)) {
+                results.signatureAssetInSource++;
+            }
+            
             //Delete the file
             fs.unlink(filePath, (err) => {
                 if (err) {
