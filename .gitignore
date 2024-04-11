@@ -3,5 +3,5 @@ node_modules
 **/.env
 /*.json
 **/sample*
-.vscode/**
+.vscode
 scripts/**

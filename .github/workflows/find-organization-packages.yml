@@ -1,5 +1,5 @@
 # This workflow will create a list of all Maven packages for the specified Organization
-# 1. The workflow will trigger by the creation of an issue with the label "start-migration"
+# 1. The workflow will trigger by the creation of an issue with the label "check-migration"
 # 2. It will use the GitHub CLI to access the GitHub API and get a list of all Maven packages
 # 3. It will use the repository secret FROM_ORG_PAT to access the GitHub API
 
