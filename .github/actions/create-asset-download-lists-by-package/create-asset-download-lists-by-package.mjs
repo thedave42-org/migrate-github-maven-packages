@@ -8,11 +8,6 @@ import * as core from '@actions/core';
 import bjson from 'big-json';
 import consoleStamp from 'console-stamp';
 
-// Add a timestamp to the console logs
-consoleStamp(console, { 
-    format: ':date(yyyy/mm/dd HH:MM:ss.l)' 
-});
-
 // Create a variable to store the list of created JSON files
 const createdFiles = [];
 
@@ -30,6 +25,12 @@ const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined) ? proce
 const restApiPageSize = (process.env.REST_API_PAGE_SIZE != undefined) ? process.env.REST_API_PAGE_SIZE : core.getInput('rest-api-page-size');
 const rootDirectory = process.env.GITHUB_WORKSPACE;
 
+// Add a timestamp to the console logs when not running in Actions
+if (core.getInput('from-org') === '') {
+    consoleStamp(console, {
+        format: ':date(yyyy/mm/dd HH:MM:ss.l)'
+    });
+}
 // Variable to hold page number for recusion
 let pageNumber = 0;
 
@@ -56,7 +57,6 @@ const wait = (ms) => {
         setTimeout(resolve, ms);
     });
 };
-
 
 // Create method to recursively get all the versions of a package
 const fetchFileNames = async (pkg, version, files = null, cursor = null) => {

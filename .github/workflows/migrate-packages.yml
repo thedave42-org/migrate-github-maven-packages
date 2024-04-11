@@ -61,6 +61,7 @@ jobs:
     upload-assets:
       needs: migrate-packages
       runs-on: ubuntu-latest
+      continue-on-error: true
 
       strategy:
         max-parallel: 1
@@ -117,9 +118,7 @@ jobs:
             gh issue comment ${{ github.event.issue.number }} -F comment.md
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-
-        
+                
     report-status:
       if: github.event.label.name == 'start-migration' && always()
       needs: upload-assets

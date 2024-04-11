@@ -29,10 +29,12 @@ if (packageImportJsonFile == '') {
     process.exit(1);
 }
 
-// Add a timestamp to the console logs
-consoleStamp(console, { 
-    format: ':date(yyyy/mm/dd HH:MM:ss.l)' 
-});
+// Add a timestamp to the console logs when not running in Actions
+if (core.getInput('from-org-pat') === '') {
+    consoleStamp(console, {
+        format: ':date(yyyy/mm/dd HH:MM:ss.l)'
+    });
+}
 
 // Variable to hold page number for recusion
 let pageNumber = 0;
@@ -66,6 +68,28 @@ const isSignatureFile = (fileName) => {
     return signatureTypes.some(type => fileName.toLowerCase().endsWith(type));
 }
 
+const downloadFile = async (fileUrl, filePath, token) => {
+    const writer = fs.createWriteStream(filePath);
+
+    const fileResponse = await axios.get(fileUrl, {
+        responseType: 'stream',
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    fileResponse.data.pipe(writer);
+
+    await new Promise((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', (error) => {
+            fs.unlinkSync(filePath);
+            reject(error);
+        });
+    });
+    return fileResponse;
+}
+
 // Create method to recursively get all the versions of a package
 const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) => {
     const query = `
@@ -75,7 +99,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
                     nodes {
                         name
                         version(version: "${version}") {
-                            files(first: ${graphQlQuerySize}, after: ${JSON.stringify(cursor)}) {
+                            files(first: ${graphQlQuerySize}, after: ${JSON.stringify(cursor)}, orderBy: {field: CREATED_AT, direction: ASC}) {
                                 nodes {
                                     name
                                     url
@@ -113,7 +137,7 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
 const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retryDelay = 1000) => {
     for (let i = 0; i < maxRetries; i++) {
         try {
-            const uploadResponse = await axios.put(uploadUrl, fileStream, headers );
+            const uploadResponse = await axios.put(uploadUrl, fileStream, headers);
             //console.log(`\t${i+1}: File uploaded.`);
             return uploadResponse;
         } catch (error) {
@@ -137,7 +161,7 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
     }).catch(() => {
         return false;
     });
-    
+
     // If the repository does not exist, log that and exit
     if (!repoExists) {
         console.error(`The repository ${packageImportJson.repository} does not exist in the organization ${packageImportJson.toOwner}.`);
@@ -173,92 +197,83 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
         // Get the files for the package version
         files = [];
         files = await fetchFileAssetUrls(pkg, version.version, files);
+        const numberOfFiles = files.length;
 
         // Log the files
-        console.log(`Version ${version.version} has ${files.length} files.`);
+        console.log(`Version ${version.version} has ${numberOfFiles} files.`);
 
         // For loop to loop through the files
-        for (let j = 0; j < files.length; j++) {
-            const file = files[j];
-            const fileUrl = file.url;
-            const fileName = file.name;
-            const uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
-            const filePath = `${rootDirectory}/${fileName}`;
+        for (let j = 0; j < numberOfFiles; j++) {
+            let fileResponse;
+            let file = files[j];
+            let fileName = file.name;
+            let uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
+            let filePath = `${rootDirectory}/${fileName}`;
 
-            const writer = fs.createWriteStream(filePath);
-
-            const fileResponse = await axios.get(fileUrl, {
-                responseType: 'stream',
-                headers: {
-                    Authorization: `Bearer ${fromToken}`
-                }
-            });
-            
-            fileResponse.data.pipe(writer);
-            
-            await new Promise((resolve, reject) => {
-                writer.on('finish', resolve);
-                writer.on('error', reject);
-            });
-            
             try {
-                // Try to download the file
-                const downloadResponse = await axios.get(uploadUrl, {
-                    responseType: 'stream',
-                    headers: {
-                        Authorization: `Bearer ${toToken}`
-                    }
-                });
-            
+                fileResponse = await downloadFile(file.url, filePath, fromToken);
+            } catch (error) {
+                files = [];
+                console.log(`\tRefreshing download tokens...`);
+                files = await fetchFileAssetUrls(pkg, version.version, files);
+                console.log(`\tTokens refreshed. Version ${version.version} has ${files.length} files.`);
+                file = files[j];
+                fileName = file.name;
+                uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
+                filePath = `${rootDirectory}/${fileName}`;
+                fileResponse = await downloadFile(file.url, filePath, fromToken);
+            }
+
+            try {
                 const downloadPath = `${filePath}_download`;
-                const writer = fs.createWriteStream(downloadPath);
-                downloadResponse.data.pipe(writer);
-            
-                await new Promise((resolve, reject) => {
-                    writer.on('finish', resolve);
-                    writer.on('error', reject);
-                });
-            
+                let downloadResult;
+                try {
+                    downloadResult = await downloadFile(uploadUrl, downloadPath, toToken);
+                } catch (error) {
+                    fs.unlinkSync(downloadPath);
+                    throw error;
+                }
+
                 // Compare the hashes of the downloaded file and the local file
                 const downloadHash = hashFile(downloadPath);
                 const localHash = hashFile(filePath);
-            
+
                 if (downloadHash === localHash) {
-                    console.log(`\t${j+1}: ${fileName} not uploaded. File already exists and is the same.`);
+                    console.log(`\t${j + 1}: ${fileName} not uploaded. File already exists and is the same.`);
                     results.filesExistAndMatch++;
                 } else {
-                    console.log(`\t${j+1}: ${fileName} not uploaded. File already exists but is different.`);
+                    console.log(`\t${j + 1}: ${fileName} not uploaded. File already exists but is different.`);
                     results.filesExistAndNoMatch++;
                 }
-            
+
                 // Delete the downloaded file
                 fs.unlinkSync(downloadPath);
             } catch (error) {
                 try {
                     // If the file is not found, upload the file
                     const fileStream = fs.createReadStream(filePath);
-                
+
                     //const uploadResponse = await axios.put(uploadUrl, fileStream, {
                     const uploadResponse = await retryUpload(uploadUrl, fileStream, {
-                            headers: {
+                        headers: {
                             Authorization: `Bearer ${toToken}`,
                             'Content-Type': 'application/octet-stream',
                             'Content-Length': fs.statSync(filePath).size
                         }
                     });
 
-                    console.log(`\t${j+1}: ${fileName} uploaded.`);
+                    console.log(`\t${j + 1}: ${fileName} uploaded. (${fs.statSync(filePath).size} bytes)`);
                     results.filesUploaded++;
                 }
                 catch (error) {
-                    console.log(`\t${j+1}: ${fileName} failed to upload.`);
+                    console.log(`\t${j + 1}: ${fileName} failed to upload.`);
                 }
             }
 
             if (isSignatureFile(fileName)) {
                 results.signatureAssetInSource++;
             }
-            
+
             //Delete the file
             fs.unlink(filePath, (err) => {
                 if (err) {
