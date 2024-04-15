@@ -71,6 +71,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check gh client auth status for FROM_ORG_PAT secret by saving output to file and post the file as a comment
+        run: |
+          gh auth status > gh-auth-status.txt
+          gh issue comment ${{ github.event.issue.number }} --body "gh auth status" --body-file gh-auth-status.txt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.FROM_ORG_PAT }}
+
+      - name: Check gh client auth status for TO_ORG_PAT secret by saving output to file and post the file as a comment
+        run: |
+          gh auth status > gh-auth-status.txt
+          gh issue comment ${{ github.event.issue.number }} --body "gh auth status" --body-file gh-auth-status.txt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.TO_ORG_PAT }}
+
       - name: Change label to migration-checked, and remove in-progress
         run: |
           gh issue edit ${{ github.event.issue.number }} --remove-label "in-progress,check-migration" --add-label "migration-checked"
