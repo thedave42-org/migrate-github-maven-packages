@@ -4,4 +4,4 @@ node_modules
 /*.json
 **/sample*
 .vscode
-scripts/**
+scripts/**/*local* 
