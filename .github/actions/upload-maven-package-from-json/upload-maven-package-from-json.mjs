@@ -15,11 +15,11 @@ import { argv } from 'node:process';
 const parser = new xml2js.Parser();
 
 // Set the organization
-const fromToken = (process.env.FROM_ORG_PAT != undefined) ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
-const toToken = (process.env.TO_ORG_PAT != undefined) ? process.env.TO_ORG_PAT : core.getInput('to-org-pat');
-const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined) ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
-const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined) ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
-const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined) ? process.env.GRAPHQL_QUERY_DELAY : core.getInput('graphql-query-delay');
+const fromToken = (process.env.FROM_ORG_PAT != undefined && process.env.FROM_ORG_PAT != '') ? process.env.FROM_ORG_PAT : core.getInput('from-org-pat');
+const toToken = (process.env.TO_ORG_PAT != undefined && process.env.TO_ORG_PAT != '') ? process.env.TO_ORG_PAT : core.getInput('to-org-pat');
+const baseUrl = (process.env.GITHUB_MAVEN_URL != undefined && process.env.GITHUB_MAVEN_URL != '') ? process.env.GITHUB_MAVEN_URL : core.getInput('github-maven-url');
+const graphQlQuerySize = (process.env.GRAPHQL_QUERY_SIZE != undefined && process.env.GRAPHQL_QUERY_SIZE != '') ? process.env.GRAPHQL_QUERY_SIZE : core.getInput('graphql-query-size');
+const graphQLQueryDelay = (process.env.GRAPHQL_QUERY_DELAY != undefined && process.env.GRAPHQL_QUERY_DELAY != '') ? process.env.GRAPHQL_QUERY_DELAY : core.getInput('graphql-query-delay');
 const packageImportJsonFile = (argv[2] != undefined) ? argv[2] : core.getInput('package-import-json-file');
 const rootDirectory = process.env.GITHUB_WORKSPACE;
 
