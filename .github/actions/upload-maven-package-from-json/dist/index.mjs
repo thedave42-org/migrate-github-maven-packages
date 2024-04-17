@@ -44241,7 +44241,7 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
         const numberOfFiles = files.length;
 
         // Log the files
-        console.log(`Version ${version.version} has ${numberOfFiles} files.`);
+        console.log(`Version ${version.version} has ${numberOfFiles} files.  Starting migration of files...`);
 
         // For loop to loop through the files
         for (let j = 0; j < numberOfFiles; j++) {
@@ -44350,6 +44350,8 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
                     console.error(err);
                 }
             });
+
+            console.log(`Version ${version.version} migration of files and metadata complete.`);
         }
         catch (error) {
             console.error(`\t${metadataVersionFile} failed to upload.`);
