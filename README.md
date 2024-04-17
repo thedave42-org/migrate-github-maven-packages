@@ -4,7 +4,7 @@ The repository provides an IssueOps based tool for migrating Maven packages betw
 
 ### Setup
 
-To get started using the tool you need to provide it with a personal access token with read access to the source Organization and a second token with write access to the destination Organization.  The tokens can either be set up in the GitHub UI directly by going to [editing the Actions Secrets in the repositories settings](/settings/secrets/actions).
+To get started using the tool you need to provide it with a personal access token with read access to the source Organization and a second token with write access to the destination Organization.  The tokens can either be set up in the GitHub UI directly by going to [editing the Actions Secrets in the repositories settings](../../settings/secrets/actions).
 
 > Note: Currently the API used to migrate the packages require a Classic PAT
 
