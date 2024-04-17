@@ -73235,6 +73235,8 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null) => {
 }
 
 (async () => {
+    console.log(`#################  graphql-query-size: ${graphQlQuerySize} #####################`);
+
     // Get a list of all Maven packages from a GitHub organization
     const packages = await fromOctokit.paginate(`GET /orgs/${fromOrg}/packages`, {
         per_page: restApiPageSize,
