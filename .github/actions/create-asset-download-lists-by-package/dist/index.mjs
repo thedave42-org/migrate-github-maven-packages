@@ -73235,11 +73235,16 @@ const fetchFileNames = async (pkg, version, files = null, cursor = null) => {
 }
 
 (async () => {
+    console.log(`Checking for Maven packages in the ${fromOrg} organization.`);
+
     // Get a list of all Maven packages from a GitHub organization
     const packages = await fromOctokit.paginate(`GET /orgs/${fromOrg}/packages`, {
+        auth: fromToken,
         per_page: restApiPageSize,
         package_type: 'maven'
     });
+
+    console.log(`Found ${packages.length} Maven packages in the ${fromOrg} organization.`);
 
     // Loop through each package in the array
     for (let i = 0; i < packages.length; i++) {
