@@ -25,7 +25,11 @@ inputs:
         description: 'A delay between GraphQL API requests for rate limiting'
         default: '0'
         required: false
-
+    rest-api-page-size:
+        description: 'The number of records per page request for scanning the source repo - reduce if getting timeouts'
+        default: '50'
+        required: false
+        
 outputs:
     packages:
         description: 'A list of the JSON files containing asset download lists'
