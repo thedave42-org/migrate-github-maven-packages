@@ -44365,9 +44365,17 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
                 console.error(`\t${metadataVersionFile} failed to upload.`);
                 console.error(error);
             }
-    
-            console.log(`Version ${version.version} migration complete.`);
+
         }
+
+        external_fs_.unlink(`${rootDirectory}/maven-metadata.xml`, (err) => {
+            if (err) {
+                console.error(`\tFailed to delete local copy of maven-metadata.xml`);
+                console.error(err);
+            }
+        });
+        
+        console.log(`Version ${version.version} migration complete.`);
     }
 
     core.setOutput('results', results);
