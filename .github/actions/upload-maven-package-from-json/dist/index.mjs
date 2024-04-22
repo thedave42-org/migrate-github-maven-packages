@@ -44061,7 +44061,11 @@ const signatureTypes = ['md5', 'sha1', 'sha256'];
 
 const isSignatureFile = (fileName) => {
     return signatureTypes.some(type => fileName.toLowerCase().endsWith(type));
-}
+};
+
+const isSnapshot = (versionName) => {
+    return versionName.includes('SNAPSHOT');
+};
 
 const downloadFile = async (fileUrl, filePath, token) => {
     const writer = external_fs_.createWriteStream(filePath);
@@ -44224,15 +44228,20 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
             name: packageImportJson.name
         };
 
-        // Use downloadFile to download the maven-metadata.xml for the version
-        const metadataVersionFile = `maven-metadata-${version.version}.xml`;
-        const metadataVersionFilePath = `${rootDirectory}/${metadataVersionFile}`;
-        const mavenMetadataVersionUrl = `${baseUrl}/${packageImportJson.repositoryFullName}/${packageImportJson.name.replace('.', '/')}/${version.version}/maven-metadata.xml`;
-        try {
-            await downloadFile(mavenMetadataVersionUrl, metadataVersionFile, fromToken);
-        }
-        catch (error) {
-            console.error(`Error downloading version maven-metadata.xml file from ${mavenMetadataVersionUrl}.`);
+        let metadataVersionFile, metadataVersionFilePath, mavenMetadataVersionUrl;
+
+        if (isSnapshot(version.version)) {
+            // Use downloadFile to download the maven-metadata.xml for the version
+            metadataVersionFile = `maven-metadata-${version.version}.xml`;
+            metadataVersionFilePath = `${rootDirectory}/${metadataVersionFile}`;
+            mavenMetadataVersionUrl = `${baseUrl}/${packageImportJson.repositoryFullName}/${packageImportJson.name.replaceAll('.', '/')}/${version.version}/maven-metadata.xml`;
+            try {
+                await downloadFile(mavenMetadataVersionUrl, metadataVersionFile, fromToken);
+            }
+            catch (error) {
+                console.error(`Error downloading version maven-metadata.xml file from ${mavenMetadataVersionUrl}.`);
+                console.error(error);
+            }
         }
 
         // Get the files for the package version
@@ -44248,7 +44257,7 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
             let fileResponse;
             let file = files[j];
             let fileName = file.name;
-            let uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
+            let uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replaceAll('.', '/')}/${version.version}/${fileName}`;
             let filePath = `${rootDirectory}/${fileName}`;
 
             try {
@@ -44260,7 +44269,7 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
                 console.log(`\tTokens refreshed. Version ${version.version} has ${files.length} files.`);
                 file = files[j];
                 fileName = file.name;
-                uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${fileName}`;
+                uploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replaceAll('.', '/')}/${version.version}/${fileName}`;
                 filePath = `${rootDirectory}/${fileName}`;
                 fileResponse = await downloadFile(file.url, filePath, fromToken);
             }
@@ -44324,38 +44333,40 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
             });
         }
 
-        // Remove the signatureTypes from the version metadata file and upload to the destination repository
-        try {
-            removeSignatureTypesFromMavenVersionMetadata(metadataVersionFilePath);
+        if (isSnapshot(version.version)) {
+            // Remove the signatureTypes from the version metadata file and upload to the destination repository
+            try {
+                removeSignatureTypesFromMavenVersionMetadata(metadataVersionFilePath);
 
-            console.log(`\tMaven version metadata for version ${version.version} updated.`);
+                console.log(`\tMaven version metadata for version ${version.version} updated.`);
 
-            const metadataVersionUploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replace('.', '/')}/${version.version}/${metadataVersionFile}`;
-            const metadataVersionFileStream = external_fs_.createReadStream(metadataVersionFilePath);
+                const metadataVersionUploadUrl = `${baseUrl}/${packageImportJson.toOwner}/${packageImportJson.repository}/${packageImportJson.name.replaceAll('.', '/')}/${version.version}/maven-metadata.xml`;
+                const metadataVersionFileStream = external_fs_.createReadStream(metadataVersionFilePath);
 
-            const uploadResponse = await retryUpload(metadataVersionUploadUrl, metadataVersionFileStream, {
-                headers: {
-                    Authorization: `Bearer ${toToken}`,
-                    'Content-Type': 'application/octet-stream',
-                    'Content-Length': external_fs_.statSync(metadataVersionFilePath).size
-                }
-            });
+                const uploadResponse = await retryUpload(metadataVersionUploadUrl, metadataVersionFileStream, {
+                    headers: {
+                        Authorization: `Bearer ${toToken}`,
+                        'Content-Type': 'application/octet-stream',
+                        'Content-Length': external_fs_.statSync(metadataVersionFilePath).size
+                    }
+                });
 
-            console.log(`\tVersion metadata for ${version.version} uploaded.`);
+                console.log(`\tVersion metadata for ${version.version} uploaded.`);
 
-            //Delete the file
-            external_fs_.unlink(metadataVersionFilePath, (err) => {
-                if (err) {
-                    console.error(`\t\tFailed to delete local copy of ${metadataVersionFilePath}`);
-                    console.error(err);
-                }
-            });
-
-            console.log(`Version ${version.version} migration of files and metadata complete.`);
-        }
-        catch (error) {
-            console.error(`\t${metadataVersionFile} failed to upload.`);
-            console.error(error);
+                //Delete the file
+                external_fs_.unlink(metadataVersionFilePath, (err) => {
+                    if (err) {
+                        console.error(`\t\tFailed to delete local copy of ${metadataVersionFilePath}`);
+                        console.error(err);
+                    }
+                });
+            }
+            catch (error) {
+                console.error(`\t${metadataVersionFile} failed to upload.`);
+                console.error(error);
+            }
+    
+            console.log(`Version ${version.version} migration complete.`);
         }
     }
 

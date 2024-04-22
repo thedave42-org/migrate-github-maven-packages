@@ -19,7 +19,7 @@ inputs:
         required: false
     graphql-query-size:
         description: 'The number of records per page request - reduce if getting timeouts'
-        default: '20'
+        default: '30'
         required: false
     graphql-query-delay:
         description: 'A delay in ms between GraphQL API requests for rate limiting'
