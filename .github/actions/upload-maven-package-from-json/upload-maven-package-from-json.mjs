@@ -138,26 +138,30 @@ const fetchFileAssetUrls = async (pkg, version, files = null, cursor = null,) =>
     return files;
 }
 
-const removeSignatureTypesFromMavenVersionMetadata = (mavenVersionMetadata) => {
-    const xml = fs.readFileSync(mavenVersionMetadata, 'utf8');
+const removeSignatureTypesFromMavenVersionMetadata = async (mavenVersionMetadata) => {
+    return new Promise((resolve, reject) => {
+        const xml = fs.readFileSync(mavenVersionMetadata, 'utf8');
     
-    // Parse XML to JS object
-    xml2js.parseString(xml, (err, result) => {
-        if (err) {
-            throw err;
-        }
-    
-        // Filter snapshotVersions
-        result.metadata.versioning[0].snapshotVersions[0].snapshotVersion = result.metadata.versioning[0].snapshotVersions[0].snapshotVersion.filter(snapshotVersion => {
-            return !signatureTypes.some(type => snapshotVersion.extension[0].includes(type));
+        // Parse XML to JS object
+        xml2js.parseString(xml, (err, result) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+        
+            // Filter snapshotVersions
+            result.metadata.versioning[0].snapshotVersions[0].snapshotVersion = result.metadata.versioning[0].snapshotVersions[0].snapshotVersion.filter(snapshotVersion => {
+                return !signatureTypes.some(type => snapshotVersion.extension[0].includes(type));
+            });
+        
+            // Convert JS object back to XML
+            const builder = new xml2js.Builder();
+            const xml = builder.buildObject(result);
+        
+            // Write updated XML back to the file
+            fs.writeFileSync(mavenVersionMetadata, xml);
+            resolve();
         });
-    
-        // Convert JS object back to XML
-        const builder = new xml2js.Builder();
-        const xml = builder.buildObject(result);
-    
-        // Write updated XML back to the file
-        fs.writeFileSync(mavenVersionMetadata, xml);
     });
 }
 
@@ -236,12 +240,14 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
         let metadataVersionFile, metadataVersionFilePath, mavenMetadataVersionUrl;
 
         if (isSnapshot(version.version)) {
+            console.log(`Version ${version.version} is a snapshot version.  Getting metadata...`);
             // Use downloadFile to download the maven-metadata.xml for the version
             metadataVersionFile = `maven-metadata-${version.version}.xml`;
             metadataVersionFilePath = `${rootDirectory}/${metadataVersionFile}`;
             mavenMetadataVersionUrl = `${baseUrl}/${packageImportJson.repositoryFullName}/${packageImportJson.name.replaceAll('.', '/')}/${version.version}/maven-metadata.xml`;
             try {
-                await downloadFile(mavenMetadataVersionUrl, metadataVersionFile, fromToken);
+                await downloadFile(mavenMetadataVersionUrl, metadataVersionFilePath, fromToken);
+                console.log(`\tDownloaded maven-metadata.xml for version ${version.version}.`);
             }
             catch (error) {
                 console.error(`Error downloading version maven-metadata.xml file from ${mavenMetadataVersionUrl}.`);
@@ -341,7 +347,7 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
         if (isSnapshot(version.version)) {
             // Remove the signatureTypes from the version metadata file and upload to the destination repository
             try {
-                removeSignatureTypesFromMavenVersionMetadata(metadataVersionFilePath);
+                await removeSignatureTypesFromMavenVersionMetadata(metadataVersionFilePath);
 
                 console.log(`\tMaven version metadata for version ${version.version} updated.`);
 
@@ -373,15 +379,15 @@ const retryUpload = async (uploadUrl, fileStream, headers, maxRetries = 5, retry
 
         }
 
-        fs.unlink(`${rootDirectory}/maven-metadata.xml`, (err) => {
-            if (err) {
-                console.error(`\tFailed to delete local copy of maven-metadata.xml`);
-                console.error(err);
-            }
-        });
-        
         console.log(`Version ${version.version} migration complete.`);
     }
+
+    fs.unlink(`${rootDirectory}/maven-metadata.xml`, (err) => {
+        if (err) {
+            console.error(`\tFailed to delete local copy of maven-metadata.xml`);
+            console.error(err);
+        }
+    });
 
     core.setOutput('results', results);
 })();
